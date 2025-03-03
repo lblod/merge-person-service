@@ -1,4 +1,11 @@
-import { query, sparqlEscapeString } from 'mu';
+import {
+  query,
+  update,
+  sparqlEscapeDateTime,
+  sparqlEscapeString,
+  sparqlEscapeUri,
+} from 'mu';
+import { v4 as uuid } from 'uuid';
 
 export async function getPersonByIdentifier(rrn: string) {
   try {
@@ -57,6 +64,47 @@ export async function getPersonByIdentifier(rrn: string) {
   } catch (error) {
     throw {
       message: `Something went wrong while getting person with identifier: ${rrn}.`,
+      status: 500,
+    };
+  }
+}
+
+export async function createPerson(values) {
+  const { firstName, lastName, identifier, birthDate } = values;
+  const personUri = sparqlEscapeUri(
+    `http://data.lblod.info/id/personen/${uuid()}`,
+  );
+  const identifierUri = sparqlEscapeUri(
+    `http://data.lblod.info/id/identificatoren/${uuid()}`,
+  );
+  const geboorteUri = sparqlEscapeUri(
+    `http://data.lblod.info/id/geboortes/${uuid()}`,
+  );
+  try {
+    await update(`
+      PREFIX person: <http://www.w3.org/ns/person#>
+      PREFIX persoon: <http://data.vlaanderen.be/ns/persoon#>
+      PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      PREFIX adms: <http://www.w3.org/ns/adms#>
+      PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  
+      INSERT {
+        ${personUri} adms:identifier ${identifierUri} .
+        ?identifier skos:notation ${sparqlEscapeString(identifier)} .
+
+        ${personUri} persoon:heeftGeboorte ${geboorteUri} .
+        ${geboorteUri} persoon:datum ${sparqlEscapeDateTime(birthDate)} .
+
+        ${personUri} persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} .
+        ${personUri} foaf:familyName ${sparqlEscapeString(lastName)} .
+      }
+    `);
+
+    return personUri;
+  } catch (error) {
+    throw {
+      message: 'Something went wrong while creating the person.',
       status: 500,
     };
   }
