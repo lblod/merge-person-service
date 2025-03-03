@@ -2,6 +2,7 @@ import { app } from 'mu';
 
 import express, { Request, Response, ErrorRequestHandler } from 'express';
 import bodyParser from 'body-parser';
+import { personRouter } from './router/person';
 
 app.use(
   bodyParser.json({
@@ -13,6 +14,8 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: true }));
+
+app.use('/person', personRouter);
 
 app.get('/health-check', async (req: Request, res: Response) => {
   res.send({ status: 'ok' });
