@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    "types": ["mu-types"],
+    "lib": ["ES2015"],
+  }
+}

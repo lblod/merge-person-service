@@ -1,0 +1,22 @@
+services:
+  person:
+    image: semtech/mu-javascript-template:latest
+    restart: 'no'
+    labels:
+      - 'logging=true'
+    environment:
+      - NODE_ENV=development
+      - NO_BABEL_NODE=true
+    ports:
+      - '8084:80'
+      - '9231:9229'
+    volumes:
+      - ./:/app
+      # ignore app/dist because this is where we map the built files to, otherwise we get an infinite loop of creating files (on mac)
+      - /app/dist
+      - ./dist:/usr/src/dist
+    networks:
+      - debug
+networks:
+  debug:
+    external: true
