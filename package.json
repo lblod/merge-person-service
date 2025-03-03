@@ -1,5 +1,6 @@
 {
   "name": "person-service",
+  "type": "module",
   "version": "0.0.0",
   "description": "Service to handle backend business logic for person instances",
   "main": "app.js",
