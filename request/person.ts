@@ -1,4 +1,5 @@
 import { Request } from 'express';
+import { stripIdentifierString } from '../utils/identifier';
 
 export function createPersonRequest(req: Request) {
   const requiredProperties = [
@@ -26,7 +27,7 @@ export function createPersonRequest(req: Request) {
 
   return {
     // eslint-disable-next-line no-useless-escape
-    identifier: req.body.identifier.replace(/[\.-]/g, ''),
+    identifier: stripIdentifierString(req.body.identifier),
     firstName: req.body.firstName?.trim(),
     lastName: req.body.lastName?.trim(),
     alternativeName: req.body.alternativeName?.trim(),

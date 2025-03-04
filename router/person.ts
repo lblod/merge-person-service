@@ -9,6 +9,7 @@ import {
   findPersonByIdentifierInOtherGraphs,
 } from '../controller/sudo-person';
 import { createUserGraphFromSession } from '../controller/session';
+import { stripIdentifierString } from '../utils/identifier';
 
 export const personRouter = Router();
 
@@ -66,4 +67,25 @@ personRouter.post('/', async (req: Request, res: Response) => {
       status: 406, // Statuscode: Not acceptable
     };
   }
+});
+
+personRouter.get('/:rrn/identifier', async (req: Request, res: Response) => {
+  if (!req.get('mu-session-id')) {
+    throw {
+      message: 'No session found.',
+      status: 401, // Statuscode: Unauthorized
+    };
+  }
+
+  const person = await getPersonByIdentifier(
+    stripIdentifierString(req.params.rrn),
+  );
+  if (!person) {
+    throw {
+      message: `No person found for identifier ${req.params.rrn}`,
+      status: 204, // Statuscode: No Content
+    };
+  }
+
+  res.status(200).send({ uri: person.uri });
 });
