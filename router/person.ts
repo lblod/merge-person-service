@@ -14,13 +14,13 @@ personRouter.post('/', async (req: Request, res: Response) => {
   const person = await getPersonByIdentifier(identifier);
 
   if (person) {
-    const isCompleetMatch = [
+    const isCompleteMatch = [
       firstName === person.firstName,
       lastName === person.lastName,
       birthDate.toJSON() === person.birthdate.toJSON(),
     ].every((condition) => condition === true);
 
-    if (isCompleetMatch) {
+    if (isCompleteMatch) {
       throw {
         message: 'The person you are trying to create already exists.',
         status: 409, // Statuscode: Conflict
@@ -29,7 +29,7 @@ personRouter.post('/', async (req: Request, res: Response) => {
       throw {
         message:
           'We found a person for the identifier but the given values do not match.',
-        status: 404, // Statuscode: Not found
+        status: 406, // Statuscode: Not acceptable
       };
     }
   }

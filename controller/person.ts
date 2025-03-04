@@ -71,14 +71,20 @@ export async function getPersonByIdentifier(rrn: string) {
 
 export async function createPerson(values) {
   const { firstName, lastName, identifier, birthDate } = values;
-  const personUri = sparqlEscapeUri(
-    `http://data.lblod.info/id/personen/${uuid()}`,
+  const idForCreateS = (uuid: string, baseUri: string) => {
+    return {
+      id: uuid,
+      uri: baseUri + uuid,
+    };
+  };
+  const personS = idForCreateS(uuid(), 'http://data.lblod.info/id/personen/');
+  const identifierS = idForCreateS(
+    uuid(),
+    'http://data.lblod.info/id/identificatoren/',
   );
-  const identifierUri = sparqlEscapeUri(
-    `http://data.lblod.info/id/identificatoren/${uuid()}`,
-  );
-  const geboorteUri = sparqlEscapeUri(
-    `http://data.lblod.info/id/geboortes/${uuid()}`,
+  const geboorteS = idForCreateS(
+    uuid(),
+    'http://data.lblod.info/id/geboortes/',
   );
   try {
     await update(`
@@ -89,20 +95,28 @@ export async function createPerson(values) {
       PREFIX adms: <http://www.w3.org/ns/adms#>
       PREFIX foaf: <http://xmlns.com/foaf/0.1/>
   
-      INSERT {
-        ${personUri} adms:identifier ${identifierUri} .
-        ?identifier skos:notation ${sparqlEscapeString(identifier)} .
+      INSERT DATA {
+        ${sparqlEscapeUri(personS.uri)} a person:Person .
+        ${sparqlEscapeUri(personS.uri)} mu:uuid ${sparqlEscapeString(personS.id)}.
+        ${sparqlEscapeUri(personS.uri)} persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} .
+        ${sparqlEscapeUri(personS.uri)} foaf:familyName ${sparqlEscapeString(lastName)} .
 
-        ${personUri} persoon:heeftGeboorte ${geboorteUri} .
-        ${geboorteUri} persoon:datum ${sparqlEscapeDateTime(birthDate)} .
+        ${sparqlEscapeUri(personS.uri)} adms:identifier ${sparqlEscapeUri(identifierS.uri)} .
+        ${sparqlEscapeUri(personS.uri)} persoon:heeftGeboorte ${sparqlEscapeUri(geboorteS.uri)} .
 
-        ${personUri} persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} .
-        ${personUri} foaf:familyName ${sparqlEscapeString(lastName)} .
+        ${sparqlEscapeUri(identifierS.uri)} a adms:Identifier .
+        ${sparqlEscapeUri(identifierS.uri)} mu:uuid ${sparqlEscapeString(geboorteS.id)} .
+        ${sparqlEscapeUri(identifierS.uri)} skos:notation ${sparqlEscapeString(identifier)} .
+
+        ${sparqlEscapeUri(geboorteS.uri)} a persoon:Geboorte .
+        ${sparqlEscapeUri(geboorteS.uri)} mu:uuid ${sparqlEscapeString(geboorteS.id)} .
+        ${sparqlEscapeUri(geboorteS.uri)} persoon:datum ${sparqlEscapeDateTime(birthDate)} .
       }
     `);
 
-    return personUri;
+    return personS.uri;
   } catch (error) {
+    console.log(error);
     throw {
       message: 'Something went wrong while creating the person.',
       status: 500,
