@@ -1,5 +1,5 @@
-import { sparqlEscapeString } from 'mu';
-import { querySudo } from '@lblod/mu-auth-sudo';
+import { sparqlEscapeString, sparqlEscapeUri } from 'mu';
+import { querySudo, updateSudo } from '@lblod/mu-auth-sudo';
 
 export async function findIdentifierInOtherGraphs(rrn: string) {
   try {
@@ -50,10 +50,81 @@ export async function findIdentifierInOtherGraphs(rrn: string) {
       altName: result.altName?.value.trim(),
       lastName: result.lastName?.value.trim(),
       birthdate: result.birthdate ? new Date(result.birthdate?.value) : null,
+      graph: result.g?.value,
     };
   } catch (error) {
     throw {
       message: `Something went wrong while searching for persons with identifier: ${rrn} in all graphs.`,
+      status: 500,
+    };
+  }
+}
+
+export async function copyPersonFromGraph(
+  personUri: string,
+  userGraph: string,
+  graph: string,
+) {
+  try {
+    await updateSudo(`
+      PREFIX person: <http://www.w3.org/ns/person#>
+      PREFIX persoon: <http://data.vlaanderen.be/ns/persoon#>
+      PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      PREFIX adms: <http://www.w3.org/ns/adms#>
+      PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+      PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+      PREFIX dct: <http://purl.org/dc/terms/>
+
+      INSERT {
+        GRAPH ${sparqlEscapeUri(userGraph)} {
+          ?person a person:Person .
+          ?person mu:uuid ?personId .
+          ?person persoon:gebruikteVoornaam ?firstName .
+          ?person foaf:name ?altName .
+          ?person foaf:familyName ?lastName .
+          ?person adms:identifier ?identifier .
+          ?person persoon:heeftGeboorte ?geboorte .
+          ?person dct:modified ?now .
+
+          ?identifier a adms:Identifier .
+          ?identifier mu:uuid ?identifierId .
+          ?identifier skos:notation ?rrn .
+          ?identifier dct:modified ?now .
+
+          ?geboorte a persoon:Geboorte .
+          ?geboorte mu:uuid ?geboorteId .
+          ?geboorte persoon:datum ?birthdate .
+          ?geboorte dct:modified ?now .
+        }
+      }
+      WHERE {
+        VALUES ?person { ${sparqlEscapeUri(personUri)} }
+        GRAPH ${sparqlEscapeUri(graph)} {
+          ?person a person:Person .
+          ?person mu:uuid ?personId .
+          ?person persoon:gebruikteVoornaam ?firstName .
+          ?person foaf:familyName ?lastName .
+
+          ?person adms:identifier ?identifier .
+          ?identifier mu:uuid ?identifierId .
+          ?identifier skos:notation ?rrn .
+
+          ?person persoon:heeftGeboorte ?geboorte .
+          ?geboorte mu:uuid ?geboorteId .
+          ?geboorte persoon:datum ?birthdate .
+
+          OPTIONAL {
+            ?person foaf:name ?altName .
+          }           
+        }
+        BIND(NOW() AS ?now)
+      }
+    `);
+  } catch (error) {
+    throw {
+      message:
+        'Something went wrong while trying to copy the person from graph.',
       status: 500,
     };
   }

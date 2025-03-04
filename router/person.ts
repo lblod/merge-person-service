@@ -4,18 +4,25 @@ import { Request, Response } from 'express';
 
 import { createPersonRequest } from '../request/person';
 import { createPerson, getPersonByIdentifier } from '../controller/person';
-import { findIdentifierInOtherGraphs } from '../controller/sudo-person';
+import {
+  copyPersonFromGraph,
+  findIdentifierInOtherGraphs,
+} from '../controller/sudo-person';
+import { createUserGraphFromSession } from '../controller/session';
 
 export const personRouter = Router();
 
 personRouter.post('/', async (req: Request, res: Response) => {
+  const userGraph = await createUserGraphFromSession(req);
   const { firstName, lastName, identifier, birthDate } =
     createPersonRequest(req);
 
   let person = await getPersonByIdentifier(identifier);
+  let shouldBeCopiedFromOtherGraph = false;
 
   if (!person) {
     person = await findIdentifierInOtherGraphs(identifier);
+    shouldBeCopiedFromOtherGraph = !!person;
   }
 
   if (person) {
@@ -26,10 +33,16 @@ personRouter.post('/', async (req: Request, res: Response) => {
     ].every((condition) => condition === true);
 
     if (isCompleteMatch) {
-      throw {
-        message: 'The person you are trying to create already exists.',
-        status: 409, // Statuscode: Conflict
-      };
+      if (shouldBeCopiedFromOtherGraph) {
+        await copyPersonFromGraph(person.uri, userGraph, person.graph);
+        res.status(201).send({ uri: person.uri });
+        return;
+      } else {
+        throw {
+          message: 'The person you are trying to create already exists.',
+          status: 409, // Statuscode: Conflict
+        };
+      }
     } else {
       throw {
         message:
@@ -46,5 +59,5 @@ personRouter.post('/', async (req: Request, res: Response) => {
     birthDate,
   });
 
-  res.status(200).send({ uri: newPerson });
+  res.status(201).send({ uri: newPerson });
 });
