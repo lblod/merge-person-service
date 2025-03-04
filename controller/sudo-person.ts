@@ -55,7 +55,6 @@ export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
   } catch (error) {
     throw {
       message: `Something went wrong while searching for persons with identifier: ${identifier} in all graphs.`,
-      status: 500,
     };
   }
 }
@@ -125,7 +124,6 @@ export async function copyPersonFromGraph(
     throw {
       message:
         'Something went wrong while trying to copy the person from graph.',
-      status: 500,
     };
   }
 }

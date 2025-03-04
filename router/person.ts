@@ -10,6 +10,7 @@ import {
 } from '../controller/sudo-person';
 import { createUserGraphFromSession } from '../controller/session';
 import { stripIdentifierString } from '../utils/identifier';
+import { HTTP_STATUS_CODE } from '../utils/constant';
 
 export const personRouter = Router();
 
@@ -54,17 +55,17 @@ personRouter.post('/', async (req: Request, res: Response) => {
     if (!copyPersonFromOtherGraph) {
       throw {
         message: 'The person you are trying to create already exists.',
-        status: 409, // Statuscode: Conflict
+        status: HTTP_STATUS_CODE.CONFLICT,
       };
     }
 
     await copyPersonFromGraph(person.uri, userGraph, person.graph);
-    res.status(201).send({ uri: person.uri });
+    res.status(HTTP_STATUS_CODE.CREATED).send({ uri: person.uri });
   } else {
     throw {
       message:
         'We found a person for the identifier but the given values do not match.',
-      status: 406, // Statuscode: Not acceptable
+      status: HTTP_STATUS_CODE.NOT_ACCEPTABLE,
     };
   }
 });
@@ -83,9 +84,9 @@ personRouter.get('/:rrn/identifier', async (req: Request, res: Response) => {
   if (!person) {
     throw {
       message: `No person found for identifier ${req.params.rrn}`,
-      status: 204, // Statuscode: No Content
+      status: HTTP_STATUS_CODE.NO_CONTENT,
     };
   }
 
-  res.status(200).send({ uri: person.uri });
+  res.status(HTTP_STATUS_CODE.OK).send({ uri: person.uri });
 });

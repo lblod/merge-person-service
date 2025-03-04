@@ -1,6 +1,7 @@
 import { Request } from 'express';
 import { querySudo } from '@lblod/mu-auth-sudo';
 import { sparqlEscapeUri, query } from 'mu';
+import { HTTP_STATUS_CODE } from '../utils/constant';
 
 async function getSession(req: Request) {
   const sessionUri = req.get('mu-session-id');
@@ -8,7 +9,7 @@ async function getSession(req: Request) {
   if (!sessionUri) {
     throw {
       message: 'No session id was found.',
-      status: 401, // Statuscode: Unauthorized
+      status: HTTP_STATUS_CODE.UNAUTHORIZED,
     };
   }
 
@@ -49,8 +50,6 @@ export async function createUserGraphFromSession(req: Request) {
   } catch (error) {
     throw {
       message: 'Could not create user graph from session.',
-      status: 500, // Statuscode: Internal Server Error
     };
   }
-
 }

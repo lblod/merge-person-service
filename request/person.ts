@@ -1,5 +1,6 @@
 import { Request } from 'express';
 import { stripIdentifierString } from '../utils/identifier';
+import { HTTP_STATUS_CODE } from '../utils/constant';
 
 export function createPersonRequest(req: Request) {
   const requiredProperties = [
@@ -12,7 +13,7 @@ export function createPersonRequest(req: Request) {
     if (!req.body[property]) {
       throw {
         message: `Property "${property}" is required when creating a new person`,
-        status: 400,
+        status: HTTP_STATUS_CODE.BAD_REQUEST,
       };
     }
   }
@@ -21,7 +22,7 @@ export function createPersonRequest(req: Request) {
   if (isNaN(birthDate.getTime())) {
     throw {
       message: 'Please provide a valid date for "birthDate".',
-      status: 400,
+      status: HTTP_STATUS_CODE.BAD_REQUEST,
     };
   }
 

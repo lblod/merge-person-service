@@ -3,6 +3,7 @@ import { app } from 'mu';
 import express, { Request, Response, ErrorRequestHandler } from 'express';
 import bodyParser from 'body-parser';
 import { personRouter } from './router/person';
+import { HTTP_STATUS_CODE } from './utils/constant';
 
 app.use(
   bodyParser.json({
@@ -22,8 +23,7 @@ app.get('/health-check', async (req: Request, res: Response) => {
 });
 
 const errorHandler: ErrorRequestHandler = function (err, _req, res, _next) {
-  // custom error handler to have a default 500 error code instead of 400 as in the template
-  res.status(err.status || 500);
+  res.status(err.status || HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR);
   res.json({
     error: {
       title: err.message,

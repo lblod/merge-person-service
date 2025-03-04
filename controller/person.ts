@@ -44,7 +44,6 @@ export async function getPersonByIdentifier(identifier: string) {
     if (results.length > 1) {
       throw {
         message: `Found more than one person for identifier: ${identifier}.`,
-        status: 500,
       };
     }
 
@@ -63,10 +62,8 @@ export async function getPersonByIdentifier(identifier: string) {
       graph: null,
     };
   } catch (error) {
-    const message = `Something went wrong while getting person with identifier: ${identifier}.`;
     throw {
-      message: error.message ?? message,
-      status: 500,
+      message: `Something went wrong while getting person with identifier: ${identifier}.`,
     };
   }
 }
@@ -137,7 +134,6 @@ export async function createPerson(values) {
     console.log(error);
     throw {
       message: 'Something went wrong while creating the person.',
-      status: 500,
     };
   }
 }
