@@ -77,39 +77,39 @@ export async function copyPersonFromGraph(
 
       INSERT {
         GRAPH ${sparqlEscapeUri(userGraph)} {
-          ?person a person:Person .
-          ?person mu:uuid ?personId .
-          ?person persoon:gebruikteVoornaam ?firstName .
-          ?person foaf:name ?altName .
-          ?person foaf:familyName ?lastName .
-          ?person adms:identifier ?identifier .
-          ?person persoon:heeftGeboorte ?geboorte .
-          ?person dct:modified ?now .
+          ?person a person:Person ;
+            mu:uuid ?personId ;
+            persoon:gebruikteVoornaam ?firstName ;
+            foaf:name ?altName ;
+            foaf:familyName ?lastName ;
+            adms:identifier ?identifier ;
+            persoon:heeftGeboorte ?geboorte ;
+            dct:modified ?now .
 
-          ?identifier a adms:Identifier .
-          ?identifier mu:uuid ?identifierId .
-          ?identifier skos:notation ?rrn .
-          ?identifier dct:modified ?now .
+          ?identifier a adms:Identifier ;
+            mu:uuid ?identifierId ;
+            skos:notation ?rrn ;
+            dct:modified ?now .
 
-          ?geboorte a persoon:Geboorte .
-          ?geboorte mu:uuid ?geboorteId .
-          ?geboorte persoon:datum ?birthdate .
-          ?geboorte dct:modified ?now .
+          ?geboorte a persoon:Geboorte ;
+            mu:uuid ?geboorteId ;
+            persoon:datum ?birthdate ;
+            dct:modified ?now .
         }
       }
       WHERE {
         VALUES ?person { ${sparqlEscapeUri(personUri)} }
         GRAPH ${sparqlEscapeUri(graph)} {
-          ?person a person:Person .
-          ?person mu:uuid ?personId .
-          ?person persoon:gebruikteVoornaam ?firstName .
-          ?person foaf:familyName ?lastName .
+          ?person a person:Person ;
+            mu:uuid ?personId ;
+            persoon:gebruikteVoornaam ?firstName ;
+            foaf:familyName ?lastName ;
+            adms:identifier ?identifier ;
+            persoon:heeftGeboorte ?geboorte .
 
-          ?person adms:identifier ?identifier .
           ?identifier mu:uuid ?identifierId .
           ?identifier skos:notation ?rrn .
 
-          ?person persoon:heeftGeboorte ?geboorte .
           ?geboorte mu:uuid ?geboorteId .
           ?geboorte persoon:datum ?birthdate .
 

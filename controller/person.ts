@@ -106,26 +106,25 @@ export async function createPerson(values) {
       PREFIX dct: <http://purl.org/dc/terms/>
   
       INSERT DATA {
-        ${sparqlEscapeUri(personS.uri)} a person:Person .
-        ${sparqlEscapeUri(personS.uri)} mu:uuid ${sparqlEscapeString(personS.id)}.
-        ${sparqlEscapeUri(personS.uri)} persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} .
-        ${sparqlEscapeUri(personS.uri)} foaf:familyName ${sparqlEscapeString(lastName)} .
-        ${sparqlEscapeUri(personS.uri)} dct:modified ${modifiedNow} .
+        ${sparqlEscapeUri(personS.uri)} a person:Person ;
+          mu:uuid ${sparqlEscapeString(personS.id)};
+          persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} ;
+          foaf:familyName ${sparqlEscapeString(lastName)} ;
+          dct:modified ${modifiedNow} ;
+          adms:identifier ${sparqlEscapeUri(identifierS.uri)} ;
+          persoon:heeftGeboorte ${sparqlEscapeUri(geboorteS.uri)} .
 
         ${alternativeNameTriple()}
 
-        ${sparqlEscapeUri(personS.uri)} adms:identifier ${sparqlEscapeUri(identifierS.uri)} .
-        ${sparqlEscapeUri(personS.uri)} persoon:heeftGeboorte ${sparqlEscapeUri(geboorteS.uri)} .
+        ${sparqlEscapeUri(identifierS.uri)} a adms:Identifier ;
+          mu:uuid ${sparqlEscapeString(geboorteS.id)} ;
+          skos:notation ${sparqlEscapeString(identifier)} ;
+          dct:modified ${modifiedNow} .
 
-        ${sparqlEscapeUri(identifierS.uri)} a adms:Identifier .
-        ${sparqlEscapeUri(identifierS.uri)} mu:uuid ${sparqlEscapeString(geboorteS.id)} .
-        ${sparqlEscapeUri(identifierS.uri)} skos:notation ${sparqlEscapeString(identifier)} .
-        ${sparqlEscapeUri(identifierS.uri)} dct:modified ${modifiedNow} .
-
-        ${sparqlEscapeUri(geboorteS.uri)} a persoon:Geboorte .
-        ${sparqlEscapeUri(geboorteS.uri)} mu:uuid ${sparqlEscapeString(geboorteS.id)} .
-        ${sparqlEscapeUri(geboorteS.uri)} persoon:datum ${sparqlEscapeDateTime(birthDate)} .
-        ${sparqlEscapeUri(geboorteS.uri)} dct:modified ${modifiedNow} .
+        ${sparqlEscapeUri(geboorteS.uri)} a persoon:Geboorte ;
+          mu:uuid ${sparqlEscapeString(geboorteS.id)} ;
+          persoon:datum ${sparqlEscapeDateTime(birthDate)} ;
+          dct:modified ${modifiedNow} .
       }
     `);
 
