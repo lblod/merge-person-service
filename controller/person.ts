@@ -71,6 +71,7 @@ export async function getPersonByIdentifier(rrn: string) {
 
 export async function createPerson(values) {
   const { firstName, lastName, identifier, birthDate } = values;
+  const modifiedNow = sparqlEscapeDateTime(new Date());
   const idForCreateS = (uuid: string, baseUri: string) => {
     return {
       id: uuid,
@@ -94,12 +95,14 @@ export async function createPerson(values) {
       PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
       PREFIX adms: <http://www.w3.org/ns/adms#>
       PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+      PREFIX dct: <http://purl.org/dc/terms/>
   
       INSERT DATA {
         ${sparqlEscapeUri(personS.uri)} a person:Person .
         ${sparqlEscapeUri(personS.uri)} mu:uuid ${sparqlEscapeString(personS.id)}.
         ${sparqlEscapeUri(personS.uri)} persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} .
         ${sparqlEscapeUri(personS.uri)} foaf:familyName ${sparqlEscapeString(lastName)} .
+        ${sparqlEscapeUri(personS.uri)} dct:modified ${modifiedNow} .
 
         ${sparqlEscapeUri(personS.uri)} adms:identifier ${sparqlEscapeUri(identifierS.uri)} .
         ${sparqlEscapeUri(personS.uri)} persoon:heeftGeboorte ${sparqlEscapeUri(geboorteS.uri)} .
@@ -107,10 +110,12 @@ export async function createPerson(values) {
         ${sparqlEscapeUri(identifierS.uri)} a adms:Identifier .
         ${sparqlEscapeUri(identifierS.uri)} mu:uuid ${sparqlEscapeString(geboorteS.id)} .
         ${sparqlEscapeUri(identifierS.uri)} skos:notation ${sparqlEscapeString(identifier)} .
+        ${sparqlEscapeUri(identifierS.uri)} dct:modified ${modifiedNow} .
 
         ${sparqlEscapeUri(geboorteS.uri)} a persoon:Geboorte .
         ${sparqlEscapeUri(geboorteS.uri)} mu:uuid ${sparqlEscapeString(geboorteS.id)} .
         ${sparqlEscapeUri(geboorteS.uri)} persoon:datum ${sparqlEscapeDateTime(birthDate)} .
+        ${sparqlEscapeUri(geboorteS.uri)} dct:modified ${modifiedNow} .
       }
     `);
 
