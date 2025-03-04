@@ -38,7 +38,7 @@ personRouter.post('/', async (req: Request, res: Response) => {
       birthDate,
     });
 
-    res.status(201).send({ uri: newPerson });
+    res.status(HTTP_STATUS_CODE.CREATED).send({ uri: newPerson });
   }
 
   const person = copyPersonFromOtherGraph
@@ -74,7 +74,7 @@ personRouter.get('/:rrn/identifier', async (req: Request, res: Response) => {
   if (!req.get('mu-session-id')) {
     throw {
       message: 'No session found.',
-      status: 401, // Statuscode: Unauthorized
+      status: HTTP_STATUS_CODE.UNAUTHORIZED,
     };
   }
 
