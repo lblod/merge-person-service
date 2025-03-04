@@ -60,10 +60,12 @@ export async function getPersonByIdentifier(rrn: string) {
       altName: result.altName?.value.trim(),
       lastName: result.lastName?.value.trim(),
       birthdate: result.birthdate ? new Date(result.birthdate?.value) : null,
+      graph: null,
     };
   } catch (error) {
+    const message = `Something went wrong while getting person with identifier: ${rrn}.`;
     throw {
-      message: `Something went wrong while getting person with identifier: ${rrn}.`,
+      message: error.message ?? message,
       status: 500,
     };
   }
