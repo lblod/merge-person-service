@@ -29,6 +29,7 @@ export function createPersonRequest(req: Request) {
     identifier: req.body.identifier.replace(/[\.-]/g, ''),
     firstName: req.body.firstName?.trim(),
     lastName: req.body.lastName?.trim(),
+    alternativeName: req.body.alternativeName?.trim(),
     birthDate,
   };
 }

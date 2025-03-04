@@ -1,7 +1,7 @@
 import { sparqlEscapeString, sparqlEscapeUri } from 'mu';
 import { querySudo, updateSudo } from '@lblod/mu-auth-sudo';
 
-export async function findIdentifierInOtherGraphs(rrn: string) {
+export async function findPersonByIdentifierInOtherGraphs(rrn: string) {
   try {
     const queryResult = await querySudo(`
       PREFIX person: <http://www.w3.org/ns/person#>

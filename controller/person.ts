@@ -72,7 +72,7 @@ export async function getPersonByIdentifier(rrn: string) {
 }
 
 export async function createPerson(values) {
-  const { firstName, lastName, identifier, birthDate } = values;
+  const { firstName, lastName, alternativeName, identifier, birthDate } = values;
   const modifiedNow = sparqlEscapeDateTime(new Date());
   const idForCreateS = (uuid: string, baseUri: string) => {
     return {
@@ -89,6 +89,14 @@ export async function createPerson(values) {
     uuid(),
     'http://data.lblod.info/id/geboortes/',
   );
+  const alternativeNameTriple = () => {
+    if (alternativeName) {
+      return `${sparqlEscapeUri(personS.uri)} foaf:name ${sparqlEscapeString(alternativeName)} .`;
+    }
+
+    return '';
+  };
+
   try {
     await update(`
       PREFIX person: <http://www.w3.org/ns/person#>
@@ -105,6 +113,8 @@ export async function createPerson(values) {
         ${sparqlEscapeUri(personS.uri)} persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} .
         ${sparqlEscapeUri(personS.uri)} foaf:familyName ${sparqlEscapeString(lastName)} .
         ${sparqlEscapeUri(personS.uri)} dct:modified ${modifiedNow} .
+
+        ${alternativeNameTriple()}
 
         ${sparqlEscapeUri(personS.uri)} adms:identifier ${sparqlEscapeUri(identifierS.uri)} .
         ${sparqlEscapeUri(personS.uri)} persoon:heeftGeboorte ${sparqlEscapeUri(geboorteS.uri)} .
