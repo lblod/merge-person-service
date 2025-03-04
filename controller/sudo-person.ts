@@ -1,7 +1,7 @@
 import { sparqlEscapeString, sparqlEscapeUri } from 'mu';
 import { querySudo, updateSudo } from '@lblod/mu-auth-sudo';
 
-export async function findPersonByIdentifierInOtherGraphs(rrn: string) {
+export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
   try {
     const queryResult = await querySudo(`
       PREFIX person: <http://www.w3.org/ns/person#>
@@ -18,7 +18,7 @@ export async function findPersonByIdentifierInOtherGraphs(rrn: string) {
           ?person a person:Person .
 
           ?person adms:identifier ?identifier .
-          ?identifier skos:notation ${sparqlEscapeString(rrn)} .
+          ?identifier skos:notation ${sparqlEscapeString(identifier)} .
 
           OPTIONAL {
           ?person persoon:gebruikteVoornaam ?firstName .
@@ -54,7 +54,7 @@ export async function findPersonByIdentifierInOtherGraphs(rrn: string) {
     };
   } catch (error) {
     throw {
-      message: `Something went wrong while searching for persons with identifier: ${rrn} in all graphs.`,
+      message: `Something went wrong while searching for persons with identifier: ${identifier} in all graphs.`,
       status: 500,
     };
   }

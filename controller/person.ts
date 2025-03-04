@@ -7,7 +7,7 @@ import {
 } from 'mu';
 import { v4 as uuid } from 'uuid';
 
-export async function getPersonByIdentifier(rrn: string) {
+export async function getPersonByIdentifier(identifier: string) {
   try {
     const queryResult = await query(`
       PREFIX person: <http://www.w3.org/ns/person#>
@@ -22,7 +22,7 @@ export async function getPersonByIdentifier(rrn: string) {
         ?person a person:Person .
 
         ?person adms:identifier ?identifier .
-        ?identifier skos:notation ${sparqlEscapeString(rrn)} .
+        ?identifier skos:notation ${sparqlEscapeString(identifier)} .
 
         OPTIONAL {
           ?person persoon:gebruikteVoornaam ?firstName .
@@ -43,7 +43,7 @@ export async function getPersonByIdentifier(rrn: string) {
     const results = queryResult.results.bindings;
     if (results.length > 1) {
       throw {
-        message: `Found more than one person for identifier: ${rrn}.`,
+        message: `Found more than one person for identifier: ${identifier}.`,
         status: 500,
       };
     }
@@ -63,7 +63,7 @@ export async function getPersonByIdentifier(rrn: string) {
       graph: null,
     };
   } catch (error) {
-    const message = `Something went wrong while getting person with identifier: ${rrn}.`;
+    const message = `Something went wrong while getting person with identifier: ${identifier}.`;
     throw {
       message: error.message ?? message,
       status: 500,
@@ -72,7 +72,8 @@ export async function getPersonByIdentifier(rrn: string) {
 }
 
 export async function createPerson(values) {
-  const { firstName, lastName, alternativeName, identifier, birthDate } = values;
+  const { firstName, lastName, alternativeName, identifier, birthDate } =
+    values;
   const modifiedNow = sparqlEscapeDateTime(new Date());
   const idForCreateS = (uuid: string, baseUri: string) => {
     return {
