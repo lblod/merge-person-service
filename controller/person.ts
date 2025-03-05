@@ -15,20 +15,11 @@ export const personRouter = Router();
 
 personRouter.post('/', async (req: Request, res: Response) => {
   const userGraph = await createUserGraphFromSession(req);
-  let copyPersonFromOtherGraph = false;
-
   const { firstName, lastName, alternativeName, identifier, birthDate } =
     createPersonRequest(req);
+  const person = await findPerson(identifier);
 
-  const personInUserGraph = await getPersonByIdentifier(identifier);
-  let personInOtherGraph = null;
-
-  if (!personInUserGraph) {
-    personInOtherGraph = await findPersonByIdentifierInOtherGraphs(identifier);
-    copyPersonFromOtherGraph = !!personInOtherGraph;
-  }
-
-  if (!personInUserGraph && !personInOtherGraph) {
+  if (!person) {
     const newPerson = await createPerson({
       firstName,
       lastName,
@@ -40,10 +31,6 @@ personRouter.post('/', async (req: Request, res: Response) => {
     res.status(HTTP_STATUS_CODE.CREATED).send({ uri: newPerson });
   }
 
-  const person = copyPersonFromOtherGraph
-    ? personInOtherGraph
-    : personInUserGraph;
-
   const isCompleteMatch = [
     firstName === person.firstName,
     lastName === person.lastName,
@@ -51,15 +38,14 @@ personRouter.post('/', async (req: Request, res: Response) => {
   ].every((condition) => condition === true);
 
   if (isCompleteMatch) {
-    if (!copyPersonFromOtherGraph) {
-      throw {
-        message: 'The person you are trying to create already exists.',
-        status: HTTP_STATUS_CODE.CONFLICT,
-      };
+    if (person.shouldCopyFromOtherGraph) {
+      await copyPersonFromGraph(person.uri, userGraph, person.graph);
+      res.status(HTTP_STATUS_CODE.CREATED).send({ uri: person.uri });
     }
-
-    await copyPersonFromGraph(person.uri, userGraph, person.graph);
-    res.status(HTTP_STATUS_CODE.CREATED).send({ uri: person.uri });
+    throw {
+      message: 'The person you are trying to create already exists.',
+      status: HTTP_STATUS_CODE.CONFLICT,
+    };
   } else {
     throw {
       message:
@@ -69,7 +55,28 @@ personRouter.post('/', async (req: Request, res: Response) => {
   }
 });
 
-export function createPersonRequest(req: Request) {
+async function findPerson(identifier: string) {
+  const personInUserGraph = await getPersonByIdentifier(identifier);
+  if (personInUserGraph) {
+    return {
+      ...personInUserGraph,
+      shouldCopyFromOtherGraph: false,
+    };
+  }
+
+  const personInOtherGraph =
+    await findPersonByIdentifierInOtherGraphs(identifier);
+  if (personInOtherGraph) {
+    return {
+      ...personInUserGraph,
+      shouldCopyFromOtherGraph: true,
+    };
+  }
+
+  return null;
+}
+
+function createPersonRequest(req: Request) {
   const requiredProperties = [
     'firstName',
     'lastName',
