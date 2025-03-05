@@ -9,7 +9,6 @@ import {
   findPersonByIdentifierInOtherGraphs,
 } from '../controller/sudo-person';
 import { createUserGraphFromSession } from '../controller/session';
-import { stripIdentifierString } from '../utils/identifier';
 import { HTTP_STATUS_CODE } from '../utils/constant';
 
 export const personRouter = Router();
@@ -69,27 +68,3 @@ personRouter.post('/', async (req: Request, res: Response) => {
     };
   }
 });
-
-personRouter.get(
-  '/:identifier/identifier',
-  async (req: Request, res: Response) => {
-    if (!req.get('mu-session-id')) {
-      throw {
-        message: 'No session found.',
-        status: HTTP_STATUS_CODE.UNAUTHORIZED,
-      };
-    }
-
-    const person = await getPersonByIdentifier(
-      stripIdentifierString(req.params.identifier),
-    );
-    if (!person) {
-      throw {
-        message: `No person found for identifier ${req.params.identifier}`,
-        status: HTTP_STATUS_CODE.NO_CONTENT,
-      };
-    }
-
-    res.status(HTTP_STATUS_CODE.OK).send({ uri: person.uri });
-  },
-);
