@@ -72,24 +72,16 @@ export async function createPerson(values) {
   const { firstName, lastName, alternativeName, identifier, birthDate } =
     values;
   const modifiedNow = sparqlEscapeDateTime(new Date());
-  const idForCreateS = (uuid: string, baseUri: string) => {
-    return {
-      id: uuid,
-      uri: baseUri + uuid,
-    };
-  };
-  const personS = idForCreateS(uuid(), 'http://data.lblod.info/id/personen/');
-  const identifierS = idForCreateS(
-    uuid(),
-    'http://data.lblod.info/id/identificatoren/',
-  );
-  const geboorteS = idForCreateS(
-    uuid(),
-    'http://data.lblod.info/id/geboortes/',
-  );
+  const personId = uuid();
+  const personUri = `http://data.lblod.info/id/personen/${personId}`;
+  const identifierId = uuid();
+  const identifierUri = `http://data.lblod.info/id/identificatoren/${identifierId}`;
+  const geboorteId = uuid();
+  const geboorteUri = `http://data.lblod.info/id/geboortes/${geboorteId}`;
+
   const alternativeNameTriple = () => {
     if (alternativeName) {
-      return `${sparqlEscapeUri(personS.uri)} foaf:name ${sparqlEscapeString(alternativeName)} .`;
+      return `${sparqlEscapeUri(personUri)} foaf:name ${sparqlEscapeString(alternativeName)} .`;
     }
 
     return '';
@@ -106,29 +98,29 @@ export async function createPerson(values) {
       PREFIX dct: <http://purl.org/dc/terms/>
   
       INSERT DATA {
-        ${sparqlEscapeUri(personS.uri)} a person:Person ;
-          mu:uuid ${sparqlEscapeString(personS.id)};
+        ${sparqlEscapeUri(personUri)} a person:Person ;
+          mu:uuid ${sparqlEscapeString(personUri)};
           persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} ;
           foaf:familyName ${sparqlEscapeString(lastName)} ;
           dct:modified ${modifiedNow} ;
-          adms:identifier ${sparqlEscapeUri(identifierS.uri)} ;
-          persoon:heeftGeboorte ${sparqlEscapeUri(geboorteS.uri)} .
+          adms:identifier ${sparqlEscapeUri(identifierUri)} ;
+          persoon:heeftGeboorte ${sparqlEscapeUri(geboorteUri)} .
 
         ${alternativeNameTriple()}
 
-        ${sparqlEscapeUri(identifierS.uri)} a adms:Identifier ;
-          mu:uuid ${sparqlEscapeString(geboorteS.id)} ;
+        ${sparqlEscapeUri(identifierUri)} a adms:Identifier ;
+          mu:uuid ${sparqlEscapeString(geboorteUri)} ;
           skos:notation ${sparqlEscapeString(identifier)} ;
           dct:modified ${modifiedNow} .
 
-        ${sparqlEscapeUri(geboorteS.uri)} a persoon:Geboorte ;
-          mu:uuid ${sparqlEscapeString(geboorteS.id)} ;
+        ${sparqlEscapeUri(geboorteUri)} a persoon:Geboorte ;
+          mu:uuid ${sparqlEscapeString(geboorteUri)} ;
           persoon:datum ${sparqlEscapeDateTime(birthDate)} ;
           dct:modified ${modifiedNow} .
       }
     `);
 
-    return personS.uri;
+    return personUri;
   } catch (error) {
     console.log(error);
     throw {
