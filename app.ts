@@ -2,8 +2,9 @@ import { app } from 'mu';
 
 import express, { Request, Response, ErrorRequestHandler } from 'express';
 import bodyParser from 'body-parser';
-import { personRouter } from './router/person';
+
 import { HTTP_STATUS_CODE } from './utils/constant';
+import { personRouter } from './controller/person';
 
 app.use(
   bodyParser.json({

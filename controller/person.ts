@@ -1,130 +1,104 @@
+import Router from 'express-promise-router';
+
+import { Request, Response } from 'express';
+
+import { HTTP_STATUS_CODE } from '../utils/constant';
+import { stripIdentifierString } from '../utils/identifier';
+import { createUserGraphFromSession } from '../service/session';
+import { createPerson, getPersonByIdentifier } from '../service/person';
 import {
-  query,
-  update,
-  sparqlEscapeDateTime,
-  sparqlEscapeString,
-  sparqlEscapeUri,
-} from 'mu';
-import { v4 as uuid } from 'uuid';
+  copyPersonFromGraph,
+  findPersonByIdentifierInOtherGraphs,
+} from '../service/sudo-person';
 
-export async function getPersonByIdentifier(identifier: string) {
-  try {
-    const queryResult = await query(`
-      PREFIX person: <http://www.w3.org/ns/person#>
-      PREFIX persoon: <http://data.vlaanderen.be/ns/persoon#>
-      PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
-      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-      PREFIX adms: <http://www.w3.org/ns/adms#>
-      PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-  
-      SELECT ?person ?firstName ?altName ?lastName ?birthdate
-      WHERE {
-        ?person a person:Person .
+export const personRouter = Router();
 
-        ?person adms:identifier ?identifier .
-        ?identifier skos:notation ${sparqlEscapeString(identifier)} .
+personRouter.post('/', async (req: Request, res: Response) => {
+  const userGraph = await createUserGraphFromSession(req);
+  let copyPersonFromOtherGraph = false;
 
-        OPTIONAL {
-          ?person persoon:gebruikteVoornaam ?firstName .
-        }
-        OPTIONAL {
-          ?person foaf:name ?altName .
-        } 
-        OPTIONAL {
-          ?person foaf:familyName ?lastName .
-        }
-        OPTIONAL {
-          ?person persoon:heeftGeboorte ?geboorte .
-          ?geboorte persoon:datum ?birthdate .
-        }
-      }
-    `);
+  const { firstName, lastName, alternativeName, identifier, birthDate } =
+    createPersonRequest(req);
 
-    const results = queryResult.results.bindings;
-    if (results.length > 1) {
+  const personInUserGraph = await getPersonByIdentifier(identifier);
+  let personInOtherGraph = null;
+
+  if (!personInUserGraph) {
+    personInOtherGraph = await findPersonByIdentifierInOtherGraphs(identifier);
+    copyPersonFromOtherGraph = !!personInOtherGraph;
+  }
+
+  if (!personInUserGraph && !personInOtherGraph) {
+    const newPerson = await createPerson({
+      firstName,
+      lastName,
+      alternativeName,
+      identifier,
+      birthDate,
+    });
+
+    res.status(HTTP_STATUS_CODE.CREATED).send({ uri: newPerson });
+  }
+
+  const person = copyPersonFromOtherGraph
+    ? personInOtherGraph
+    : personInUserGraph;
+
+  const isCompleteMatch = [
+    firstName === person.firstName,
+    lastName === person.lastName,
+    birthDate.toJSON() === person.birthdate.toJSON(),
+  ].every((condition) => condition === true);
+
+  if (isCompleteMatch) {
+    if (!copyPersonFromOtherGraph) {
       throw {
-        message: `Found more than one person for identifier: ${identifier}.`,
+        message: 'The person you are trying to create already exists.',
+        status: HTTP_STATUS_CODE.CONFLICT,
       };
     }
 
-    if (results.length === 0) {
-      return null;
-    }
-
-    const result = queryResult.results.bindings[0];
-
-    return {
-      uri: result.person?.value,
-      firstName: result.firstName?.value.trim(),
-      altName: result.altName?.value.trim(),
-      lastName: result.lastName?.value.trim(),
-      birthdate: result.birthdate ? new Date(result.birthdate?.value) : null,
-      graph: null,
-    };
-  } catch (error) {
+    await copyPersonFromGraph(person.uri, userGraph, person.graph);
+    res.status(HTTP_STATUS_CODE.CREATED).send({ uri: person.uri });
+  } else {
     throw {
-      message: `Something went wrong while getting person with identifier: ${identifier}.`,
+      message:
+        'We found a person for the identifier but the given values do not match.',
+      status: HTTP_STATUS_CODE.NOT_ACCEPTABLE,
     };
   }
-}
+});
 
-export async function createPerson(values) {
-  const { firstName, lastName, alternativeName, identifier, birthDate } =
-    values;
-  const modifiedNow = sparqlEscapeDateTime(new Date());
-  const personId = uuid();
-  const personUri = `http://data.lblod.info/id/personen/${personId}`;
-  const identifierId = uuid();
-  const identifierUri = `http://data.lblod.info/id/identificatoren/${identifierId}`;
-  const geboorteId = uuid();
-  const geboorteUri = `http://data.lblod.info/id/geboortes/${geboorteId}`;
-
-  const alternativeNameTriple = () => {
-    if (alternativeName) {
-      return `${sparqlEscapeUri(personUri)} foaf:name ${sparqlEscapeString(alternativeName)} .`;
+export function createPersonRequest(req: Request) {
+  const requiredProperties = [
+    'firstName',
+    'lastName',
+    'identifier',
+    'birthDate',
+  ];
+  for (const property of requiredProperties) {
+    if (!req.body[property]) {
+      throw {
+        message: `Property "${property}" is required when creating a new person`,
+        status: HTTP_STATUS_CODE.BAD_REQUEST,
+      };
     }
+  }
 
-    return '';
+  const birthDate = new Date(req.body.birthDate);
+  if (isNaN(birthDate.getTime())) {
+    throw {
+      message: 'Please provide a valid date for "birthDate".',
+      status: HTTP_STATUS_CODE.BAD_REQUEST,
+    };
+  }
+
+  return {
+    // eslint-disable-next-line no-useless-escape
+    identifier: stripIdentifierString(req.body.identifier),
+    firstName: req.body.firstName?.trim(),
+    lastName: req.body.lastName?.trim(),
+    alternativeName: req.body.alternativeName?.trim(),
+    birthDate,
   };
-
-  try {
-    await update(`
-      PREFIX person: <http://www.w3.org/ns/person#>
-      PREFIX persoon: <http://data.vlaanderen.be/ns/persoon#>
-      PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
-      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-      PREFIX adms: <http://www.w3.org/ns/adms#>
-      PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-      PREFIX dct: <http://purl.org/dc/terms/>
-  
-      INSERT DATA {
-        ${sparqlEscapeUri(personUri)} a person:Person ;
-          mu:uuid ${sparqlEscapeString(personUri)};
-          persoon:gebruikteVoornaam ${sparqlEscapeString(firstName)} ;
-          foaf:familyName ${sparqlEscapeString(lastName)} ;
-          dct:modified ${modifiedNow} ;
-          adms:identifier ${sparqlEscapeUri(identifierUri)} ;
-          persoon:heeftGeboorte ${sparqlEscapeUri(geboorteUri)} .
-
-        ${alternativeNameTriple()}
-
-        ${sparqlEscapeUri(identifierUri)} a adms:Identifier ;
-          mu:uuid ${sparqlEscapeString(geboorteUri)} ;
-          skos:notation ${sparqlEscapeString(identifier)} ;
-          dct:modified ${modifiedNow} .
-
-        ${sparqlEscapeUri(geboorteUri)} a persoon:Geboorte ;
-          mu:uuid ${sparqlEscapeString(geboorteUri)} ;
-          persoon:datum ${sparqlEscapeDateTime(birthDate)} ;
-          dct:modified ${modifiedNow} .
-      }
-    `);
-
-    return personUri;
-  } catch (error) {
-    console.log(error);
-    throw {
-      message: 'Something went wrong while creating the person.',
-    };
-  }
 }
