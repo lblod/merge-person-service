@@ -5,15 +5,22 @@ import { HttpError } from '../utils/http-error';
 import { HTTP_STATUS_CODE } from '../utils/constant';
 
 export class RateLimitService {
-  private rateLimit: number = 1000;
-  private timeSpan: number = 30000;
+  private rateLimit: number = 0;
+  private timeSpan: number = 0;
 
   private sessionMapping = {};
 
-  setRateLimit(limit: number) {
+  setRateLimit(limit: number | undefined) {
+    if (!limit) {
+      return;
+    }
     this.rateLimit = limit;
   }
-  setRateLimitTimeSpan(time: number) {
+  setRateLimitTimeSpan(time: number | undefined) {
+    if (!time) {
+      return;
+    }
+
     this.timeSpan = time;
   }
 
@@ -46,6 +53,7 @@ export class RateLimitService {
     } else {
       this.sessionMapping[sessionId].attempts++;
     }
+    console.log(this.sessionMapping);
   }
   private isTimeSpanExceeded(sessionId: string) {
     if (!this.sessionMapping[sessionId]) {

@@ -17,8 +17,8 @@ import { RateLimitService } from '../service/rate-limit';
 
 export const personRouter = Router();
 const rateLimitService = new RateLimitService();
-rateLimitService.setRateLimit(2);
-rateLimitService.setRateLimitTimeSpan(30000);
+rateLimitService.setRateLimit(Number(process.env.RATE_LIMIT));
+rateLimitService.setRateLimitTimeSpan(Number(process.env.RATE_LIMIT_TIME_SPAN));
 
 personRouter.post('/', async (req: Request, res: Response) => {
   rateLimitService.applyOnRequest(req);
