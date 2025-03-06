@@ -15,7 +15,7 @@ export class RateLimitService {
     if (!limit) {
       return;
     }
-    this.rateLimit = 1;
+    this.rateLimit = limit;
   }
   setRateLimitTimeSpan(time: number | undefined) {
     if (!time) {
