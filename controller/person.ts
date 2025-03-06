@@ -3,6 +3,7 @@ import Router from 'express-promise-router';
 import { Request, Response } from 'express';
 
 import { HTTP_STATUS_CODE } from '../utils/constant';
+import { HttpError } from '../utils/http-error';
 import {
   createPerson,
   getPersonByIdentifier,
@@ -49,16 +50,15 @@ personRouter.post('/', async (req: Request, res: Response) => {
 
       res.status(HTTP_STATUS_CODE.CREATED).send({ uri: person.uri });
     }
-    throw {
-      message: 'The person you are trying to create already exists.',
-      status: HTTP_STATUS_CODE.CONFLICT,
-    };
+    throw new HttpError(
+      'The person you are trying to create already exists.',
+      HTTP_STATUS_CODE.CONFLICT,
+    );
   } else {
-    throw {
-      message:
-        'We found a person for the identifier but the given values do not match.',
-      status: HTTP_STATUS_CODE.NOT_ACCEPTABLE,
-    };
+    throw new HttpError(
+      'We found a person for the identifier but the given values do not match.',
+      HTTP_STATUS_CODE.NOT_ACCEPTABLE,
+    );
   }
 });
 
@@ -92,19 +92,19 @@ function createPersonRequest(req: Request) {
   ];
   for (const property of requiredProperties) {
     if (!req.body[property]) {
-      throw {
-        message: `Property "${property}" is required when creating a new person`,
-        status: HTTP_STATUS_CODE.BAD_REQUEST,
-      };
+      throw new HttpError(
+        `Property "${property}" is required when creating a new person`,
+        HTTP_STATUS_CODE.BAD_REQUEST,
+      );
     }
   }
 
   const birthDate = new Date(req.body.birthDate);
   if (isNaN(birthDate.getTime())) {
-    throw {
-      message: 'Please provide a valid date for "birthDate".',
-      status: HTTP_STATUS_CODE.BAD_REQUEST,
-    };
+    throw new HttpError(
+      'Please provide a valid date for "birthDate".',
+      HTTP_STATUS_CODE.BAD_REQUEST,
+    );
   }
 
   return {

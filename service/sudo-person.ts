@@ -1,6 +1,8 @@
 import { sparqlEscapeString, sparqlEscapeUri } from 'mu';
 import { querySudo } from '@lblod/mu-auth-sudo';
 
+import { HttpError } from '../utils/http-error';
+
 export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
   try {
     const queryResult = await querySudo(`
@@ -53,9 +55,9 @@ export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
       graph: result.g?.value,
     };
   } catch (error) {
-    throw {
-      message: `Something went wrong while searching for persons with identifier: ${identifier} in all graphs.`,
-    };
+    throw new HttpError(
+      `Something went wrong while searching for persons with identifier: ${identifier} in all graphs.`,
+    );
   }
 }
 
@@ -120,9 +122,8 @@ export async function getConstructBindingsForPersonInGraph(
 
     return queryResult.results.bindings;
   } catch (error) {
-    throw {
-      message:
-        'Something went wrong while trying to get the person from another graph.',
-    };
+    throw new HttpError(
+      'Something went wrong while trying to get the person from another graph.',
+    );
   }
 }

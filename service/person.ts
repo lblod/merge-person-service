@@ -8,6 +8,8 @@ import {
 } from 'mu';
 import { v4 as uuid } from 'uuid';
 
+import { HttpError } from '../utils/http-error';
+
 export async function getPersonByIdentifier(identifier: string) {
   try {
     const queryResult = await query(`
@@ -43,9 +45,9 @@ export async function getPersonByIdentifier(identifier: string) {
 
     const results = queryResult.results.bindings;
     if (results.length > 1) {
-      throw {
-        message: `Found more than one person for identifier: ${identifier}.`,
-      };
+      throw new HttpError(
+        `Found more than one person for identifier: ${identifier}.`,
+      );
     }
 
     if (results.length === 0) {
@@ -63,9 +65,9 @@ export async function getPersonByIdentifier(identifier: string) {
       graph: null,
     };
   } catch (error) {
-    throw {
-      message: `Something went wrong while getting person with identifier: ${identifier}.`,
-    };
+    throw new HttpError(
+      `Something went wrong while getting person with identifier: ${identifier}.`,
+    );
   }
 }
 
@@ -123,10 +125,7 @@ export async function createPerson(values) {
 
     return personUri;
   } catch (error) {
-    console.log(error);
-    throw {
-      message: 'Something went wrong while creating the person.',
-    };
+    throw new HttpError('Something went wrong while creating the person.');
   }
 }
 
@@ -162,8 +161,8 @@ export async function insertPersonBindings(bindings) {
   try {
     await update(`INSERT DATA { ${values.join(' . \n')} }`);
   } catch (error) {
-    throw {
-      message: 'Something went wrong while inserting bindings for person.',
-    };
+    throw new HttpError(
+      'Something went wrong while inserting bindings for person.',
+    );
   }
 }
