@@ -20,6 +20,10 @@ It could be that the _identifier_ is not found in the graph that the user has ac
 
 When the person was not found over the entire database a new person is created. This person will get a new _identifier_ & _geboorte_ subject.
 
+## Rate Limit
+
+We added a simple rate limit in the POST person endpoint. This to prevent brute forcing person information. This limit can be set by adding `RATE_LIMIT` and `RATE_LIMIT_TIME_SPAN` to your service environments. The default values for these are `0` so please add them to your service.
+
 ## Adding it to your project
 
 This can easily be done by adding it as a service in your _docker-compose.yml_
@@ -31,4 +35,7 @@ services:
     labels:
       - "logging=true"
     restart: always
+    environment:
+      RATE_LIMIT: 1000
+      RATE_LIMIT_TIME_SPAN: 30000
 ```
