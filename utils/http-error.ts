@@ -14,5 +14,8 @@ export class HttpError extends Error {
     if (!this.description) {
       this.description = null;
     }
+    console.log('\n Http error: ');
+    console.log('\t statusCode: ', this.status);
+    console.log('\t message: ', this.message);
   }
 }
