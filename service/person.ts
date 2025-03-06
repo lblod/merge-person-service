@@ -4,6 +4,7 @@ import {
   sparqlEscapeDateTime,
   sparqlEscapeString,
   sparqlEscapeUri,
+  sparqlEscape,
 } from 'mu';
 import { v4 as uuid } from 'uuid';
 
@@ -125,6 +126,44 @@ export async function createPerson(values) {
     console.log(error);
     throw {
       message: 'Something went wrong while creating the person.',
+    };
+  }
+}
+
+function sparqlEscapeQueryBinding(binding: {
+  type: string;
+  value: string;
+  datatype: string;
+}) {
+  const datatypeNames = {
+    'http://www.w3.org/2001/XMLSchema#dateTime': 'dateTime',
+    'http://www.w3.org/2001/XMLSchema#datetime': 'dateTime',
+    'http://www.w3.org/2001/XMLSchema#date': 'date',
+    'http://www.w3.org/2001/XMLSchema#decimal': 'decimal',
+    'http://www.w3.org/2001/XMLSchema#integer': 'int',
+    'http://www.w3.org/2001/XMLSchema#float': 'float',
+    'http://www.w3.org/2001/XMLSchema#boolean': 'bool',
+  };
+  const escapeType = datatypeNames[binding.datatype] || 'string';
+  return binding.type === 'uri'
+    ? sparqlEscapeUri(binding.value)
+    : sparqlEscape(binding.value, escapeType);
+}
+
+export async function insertPersonBindings(bindings) {
+  const values = bindings.map((spo) => {
+    const subject = sparqlEscapeUri(spo.s.value);
+    const predicate = sparqlEscapeUri(spo.p.value);
+    const objectWithDatatype = sparqlEscapeQueryBinding(spo.o);
+
+    return `${subject} ${predicate} ${objectWithDatatype}`;
+  });
+
+  try {
+    await update(`INSERT DATA { ${values.join(' . \n')} }`);
+  } catch (error) {
+    throw {
+      message: 'Something went wrong while inserting bindings for person.',
     };
   }
 }

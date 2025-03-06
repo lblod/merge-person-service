@@ -3,18 +3,19 @@ import Router from 'express-promise-router';
 import { Request, Response } from 'express';
 
 import { HTTP_STATUS_CODE } from '../utils/constant';
-import { stripIdentifierString } from '../utils/identifier';
-import { createUserGraphFromSession } from '../service/session';
-import { createPerson, getPersonByIdentifier } from '../service/person';
 import {
-  copyPersonFromGraph,
+  createPerson,
+  getPersonByIdentifier,
+  insertPersonBindings,
+} from '../service/person';
+import {
+  getConstructBindingsForPersonInGraph,
   findPersonByIdentifierInOtherGraphs,
 } from '../service/sudo-person';
 
 export const personRouter = Router();
 
 personRouter.post('/', async (req: Request, res: Response) => {
-  const userGraph = await createUserGraphFromSession(req);
   const { firstName, lastName, alternativeName, identifier, birthDate } =
     createPersonRequest(req);
   const person = await findPerson(identifier);
@@ -39,7 +40,13 @@ personRouter.post('/', async (req: Request, res: Response) => {
 
   if (isCompleteMatch) {
     if (person.shouldCopyFromOtherGraph) {
-      await copyPersonFromGraph(person.uri, userGraph, person.graph);
+      const personBindings = await getConstructBindingsForPersonInGraph(
+        person.uri,
+        person.graph,
+      );
+
+      await insertPersonBindings(personBindings);
+
       res.status(HTTP_STATUS_CODE.CREATED).send({ uri: person.uri });
     }
     throw {
@@ -68,7 +75,7 @@ async function findPerson(identifier: string) {
     await findPersonByIdentifierInOtherGraphs(identifier);
   if (personInOtherGraph) {
     return {
-      ...personInUserGraph,
+      ...personInOtherGraph,
       shouldCopyFromOtherGraph: true,
     };
   }
@@ -102,7 +109,7 @@ function createPersonRequest(req: Request) {
 
   return {
     // eslint-disable-next-line no-useless-escape
-    identifier: stripIdentifierString(req.body.identifier),
+    identifier: req.body.identifier.replace(/[\.-]/g, ''),
     firstName: req.body.firstName?.trim(),
     lastName: req.body.lastName?.trim(),
     alternativeName: req.body.alternativeName?.trim(),

@@ -1,5 +1,5 @@
 import { sparqlEscapeString, sparqlEscapeUri } from 'mu';
-import { querySudo, updateSudo } from '@lblod/mu-auth-sudo';
+import { querySudo } from '@lblod/mu-auth-sudo';
 
 export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
   try {
@@ -59,13 +59,12 @@ export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
   }
 }
 
-export async function copyPersonFromGraph(
+export async function getConstructBindingsForPersonInGraph(
   personUri: string,
-  userGraph: string,
   graph: string,
 ) {
   try {
-    await updateSudo(`
+    const queryResult = await querySudo(`
       PREFIX person: <http://www.w3.org/ns/person#>
       PREFIX persoon: <http://data.vlaanderen.be/ns/persoon#>
       PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
@@ -75,8 +74,7 @@ export async function copyPersonFromGraph(
       PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
       PREFIX dct: <http://purl.org/dc/terms/>
 
-      INSERT {
-        GRAPH ${sparqlEscapeUri(userGraph)} {
+      CONSTRUCT {
           ?person a person:Person ;
             mu:uuid ?personId ;
             persoon:gebruikteVoornaam ?firstName ;
@@ -95,8 +93,7 @@ export async function copyPersonFromGraph(
             mu:uuid ?geboorteId ;
             persoon:datum ?birthdate ;
             dct:modified ?now .
-        }
-      }
+    }
       WHERE {
         VALUES ?person { ${sparqlEscapeUri(personUri)} }
         GRAPH ${sparqlEscapeUri(graph)} {
@@ -120,10 +117,12 @@ export async function copyPersonFromGraph(
         BIND(NOW() AS ?now)
       }
     `);
+
+    return queryResult.results.bindings;
   } catch (error) {
     throw {
       message:
-        'Something went wrong while trying to copy the person from graph.',
+        'Something went wrong while trying to get the person from another graph.',
     };
   }
 }
