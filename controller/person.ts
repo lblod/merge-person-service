@@ -14,6 +14,7 @@ import {
   findPersonByIdentifierInOtherGraphs,
 } from '../service/sudo-person';
 import { RateLimitService } from '../service/rate-limit';
+import { getAccountUri } from '../service/session';
 
 export const personRouter = Router();
 const rateLimitService = new RateLimitService();
@@ -21,7 +22,16 @@ rateLimitService.setRateLimit(Number(process.env.RATE_LIMIT));
 rateLimitService.setRateLimitTimeSpan(Number(process.env.RATE_LIMIT_TIME_SPAN));
 
 personRouter.post('/', async (req: Request, res: Response) => {
-  rateLimitService.applyOnRequest(req);
+  const accountUri = await getAccountUri(req);
+
+  if (!accountUri) {
+    throw new HttpError(
+      'No account found for session id',
+      HTTP_STATUS_CODE.UNAUTHORIZED,
+    );
+  }
+
+  rateLimitService.applyOnRequest(req, accountUri);
 
   const { firstName, lastName, alternativeName, identifier, birthDate } =
     createPersonRequest(req);

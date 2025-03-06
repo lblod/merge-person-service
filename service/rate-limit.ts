@@ -8,7 +8,7 @@ export class RateLimitService {
   private rateLimit: number = 0;
   private timeSpan: number = 0;
 
-  private sessionMapping = {};
+  private accountMapping = {};
 
   setRateLimit(limit: number | undefined) {
     if (!limit) {
@@ -24,26 +24,30 @@ export class RateLimitService {
     this.timeSpan = time;
   }
 
-  applyOnRequest(request: Request) {
+  async applyOnRequest(request: Request, accountUri: string | undefined) {
     const sessionId = request.get('mu-session-id');
 
+    if (!accountUri) {
+      throw new HttpError('Account uri must be provided.');
+    }
+
     if (!sessionId) {
-      throw new HttpError('No session id fount', HTTP_STATUS_CODE.UNAUTHORIZED);
+      throw new HttpError('No session id found', HTTP_STATUS_CODE.UNAUTHORIZED);
     }
 
-    if (this.isTimeSpanExceeded(sessionId)) {
-      delete this.sessionMapping[sessionId];
+    if (this.isTimeSpanExceeded(accountUri)) {
+      delete this.accountMapping[accountUri];
     }
 
-    if (this.isRateLimitExceeded(sessionId)) {
+    if (this.isRateLimitExceeded(accountUri)) {
       throw new HttpError(
         'Rate limit exceeded',
         HTTP_STATUS_CODE.TOO_MANY_REQUESTS,
       );
     }
 
-    if (!this.sessionMapping[sessionId]) {
-      this.sessionMapping[sessionId] = {
+    if (!this.accountMapping[accountUri]) {
+      this.accountMapping[accountUri] = {
         attempts: 1,
         stop: moment(new Date())
           .add(this.timeSpan, 'milliseconds')
@@ -51,25 +55,25 @@ export class RateLimitService {
           .getTime(),
       };
     } else {
-      this.sessionMapping[sessionId].attempts++;
+      this.accountMapping[accountUri].attempts++;
     }
-    console.log(this.sessionMapping);
+    console.log(this.accountMapping);
   }
-  private isTimeSpanExceeded(sessionId: string) {
-    if (!this.sessionMapping[sessionId]) {
+  private isTimeSpanExceeded(accountUri: string) {
+    if (!this.accountMapping[accountUri]) {
       return true;
     }
 
     return (
       moment(new Date()).toDate().getTime() >=
-      this.sessionMapping[sessionId].stop
+      this.accountMapping[accountUri].stop
     );
   }
-  private isRateLimitExceeded(sessionId: string) {
-    if (!this.sessionMapping[sessionId]) {
+  private isRateLimitExceeded(accountUri: string) {
+    if (!this.accountMapping[accountUri]) {
       return false;
     }
 
-    return this.sessionMapping[sessionId].attempts >= this.rateLimit;
+    return this.accountMapping[accountUri].attempts >= this.rateLimit;
   }
 }
