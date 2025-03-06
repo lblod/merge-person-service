@@ -3,6 +3,7 @@ import moment from 'moment';
 
 import { HttpError } from '../utils/http-error';
 import { HTTP_STATUS_CODE } from '../utils/constant';
+import { getAccountUri } from './session';
 
 export class RateLimitService {
   private rateLimit: number = 0;
@@ -14,7 +15,7 @@ export class RateLimitService {
     if (!limit) {
       return;
     }
-    this.rateLimit = limit;
+    this.rateLimit = 1;
   }
   setRateLimitTimeSpan(time: number | undefined) {
     if (!time) {
@@ -24,15 +25,20 @@ export class RateLimitService {
     this.timeSpan = time;
   }
 
-  async applyOnRequest(request: Request, accountUri: string | undefined) {
+  async applyOnRequest(request: Request) {
     const sessionId = request.get('mu-session-id');
-
-    if (!accountUri) {
-      throw new HttpError('Account uri must be provided.');
-    }
 
     if (!sessionId) {
       throw new HttpError('No session id found', HTTP_STATUS_CODE.UNAUTHORIZED);
+    }
+
+    const accountUri = await getAccountUri(request);
+
+    if (!accountUri) {
+      throw new HttpError(
+        'No account found for session id',
+        HTTP_STATUS_CODE.UNAUTHORIZED,
+      );
     }
 
     if (this.isTimeSpanExceeded(accountUri)) {
