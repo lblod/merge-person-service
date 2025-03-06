@@ -13,10 +13,16 @@ import {
   getConstructBindingsForPersonInGraph,
   findPersonByIdentifierInOtherGraphs,
 } from '../service/sudo-person';
+import { RateLimitService } from '../service/rate-limit';
 
 export const personRouter = Router();
+const rateLimitService = new RateLimitService();
+rateLimitService.setRateLimit(2);
+rateLimitService.setRateLimitTimeSpan(30000);
 
 personRouter.post('/', async (req: Request, res: Response) => {
+  rateLimitService.applyOnRequest(req);
+
   const { firstName, lastName, alternativeName, identifier, birthDate } =
     createPersonRequest(req);
   const person = await findPerson(identifier);
