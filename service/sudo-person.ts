@@ -123,7 +123,7 @@ export async function getConstructBindingsForPersonInGraph(
     return queryResult.results.bindings;
   } catch (error) {
     throw new HttpError(
-      'Something went wrong while trying to get the person from another graph.',
+      'Something went wrong while trying to construct the person from another graph.',
     );
   }
 }

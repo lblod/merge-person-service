@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
     "types": ["mu-types"],
-    "lib": ["ES2015"],
+    "lib": ["ES2021"],
   }
 }

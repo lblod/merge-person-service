@@ -20,12 +20,6 @@ It could be that the _identifier_ is not found in the graph that the user has ac
 
 When the person was not found over the entire database a new person is created. This person will get a new _identifier_ & _geboorte_ subject.
 
-### Get person by identifier
-
-Endpoint: `/person/:identifier/identifier`
-
-If the _identifier_ is know the person uri can be fetched if this already exists in the database where the session has access to.
-
 ## Adding it to your project
 
 This can easily be done by adding it as a service in your _docker-compose.yml_

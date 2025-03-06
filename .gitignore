@@ -1,6 +1,6 @@
-node_modules
+/node_modules
 .env
 .eslintcache
-dist
+/dist
 .vscode
 docker-compose.override.yml
