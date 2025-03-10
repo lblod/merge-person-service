@@ -2,8 +2,11 @@ import { sparqlEscapeString } from 'mu';
 import { querySudo } from '@lblod/mu-auth-sudo';
 
 import { HttpError } from '../utils/http-error';
+import { Person } from '../types';
 
-export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
+export async function findPersonByIdentifierInOtherGraphs(
+  identifier: string,
+): Promise<null | Person> {
   try {
     const queryResult = await querySudo(`
       PREFIX person: <http://www.w3.org/ns/person#>
@@ -14,7 +17,7 @@ export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
       PREFIX foaf: <http://xmlns.com/foaf/0.1/>
       PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
   
-      SELECT ?person ?firstName ?altName ?lastName ?birthdate ?g
+      SELECT ?person ?firstName ?alternativeName ?lastName ?birthdate ?g
       WHERE {
         GRAPH ?g {
           ?person a person:Person .
@@ -24,7 +27,7 @@ export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
           ?person persoon:gebruikteVoornaam ?firstName .
           }
           OPTIONAL {
-            ?person foaf:name ?altName .
+            ?person foaf:name ?alternativeName .
           } 
           OPTIONAL {
             ?person foaf:familyName ?lastName .
@@ -46,11 +49,14 @@ export async function findPersonByIdentifierInOtherGraphs(identifier: string) {
     const result = results[0];
     return {
       uri: result.person?.value,
+      identifier,
       firstName: result.firstName?.value.trim(),
-      altName: result.altName?.value.trim(),
+      alternativeName: result.alternativeName?.value.trim(),
       lastName: result.lastName?.value.trim(),
-      birthdate: result.birthdate ? new Date(result.birthdate?.value) : null,
-      graph: result.g?.value,
+      birthdate: result.birthdate
+        ? new Date(result.birthdate?.value)
+        : undefined,
+      graph: result.g.value,
     };
   } catch (error) {
     throw new HttpError(

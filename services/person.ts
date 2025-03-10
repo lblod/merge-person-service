@@ -8,10 +8,11 @@ import {
 import { v4 as uuid } from 'uuid';
 
 import { HttpError } from '../utils/http-error';
+import { Person, PersonCreate } from '../types';
 
-export async function createPerson(values) {
-  const { firstName, lastName, alternativeName, identifier, birthDate } =
-    values;
+export async function createPerson(person: PersonCreate): Promise<string> {
+  const { firstName, lastName, alternativeName, identifier, birthdate } =
+    person;
   const modifiedNow = sparqlEscapeDateTime(new Date());
   const personId = uuid();
   const personUri = `http://data.lblod.info/id/personen/${personId}`;
@@ -53,7 +54,7 @@ export async function createPerson(values) {
           dct:modified ${modifiedNow} .
         ${sparqlEscapeUri(geboorteUri)} a persoon:Geboorte ;
           mu:uuid ${sparqlEscapeString(geboorteUri)} ;
-          persoon:datum ${sparqlEscapeDateTime(birthDate)} ;
+          persoon:datum ${sparqlEscapeDateTime(birthdate)} ;
           dct:modified ${modifiedNow} .
       }
     `);
@@ -66,7 +67,9 @@ export async function createPerson(values) {
   }
 }
 
-export async function getPersonByIdentifier(identifier: string) {
+export async function getPersonByIdentifier(
+  identifier: string,
+): Promise<null | Person> {
   try {
     const queryResult = await query(`
       PREFIX person: <http://www.w3.org/ns/person#>
@@ -76,7 +79,7 @@ export async function getPersonByIdentifier(identifier: string) {
       PREFIX adms: <http://www.w3.org/ns/adms#>
       PREFIX foaf: <http://xmlns.com/foaf/0.1/>
   
-      SELECT ?person ?firstName ?altName ?lastName ?birthdate
+      SELECT ?person ?firstName ?alternativeName ?lastName ?birthdate
       WHERE {
         ?person a person:Person .
         ?person adms:identifier ?identifier .
@@ -85,7 +88,7 @@ export async function getPersonByIdentifier(identifier: string) {
           ?person persoon:gebruikteVoornaam ?firstName .
         }
         OPTIONAL {
-          ?person foaf:name ?altName .
+          ?person foaf:name ?alternativeName .
         } 
         OPTIONAL {
           ?person foaf:familyName ?lastName .
@@ -112,11 +115,14 @@ export async function getPersonByIdentifier(identifier: string) {
 
     return {
       uri: result.person?.value,
+      identifier,
       firstName: result.firstName?.value.trim(),
-      altName: result.altName?.value.trim(),
+      alternativeName: result.alternativeName?.value.trim(),
       lastName: result.lastName?.value.trim(),
-      birthdate: result.birthdate ? new Date(result.birthdate?.value) : null,
-      graph: null,
+      birthdate: result.birthdate
+        ? new Date(result.birthdate?.value)
+        : undefined,
+      graph: undefined,
     };
   } catch (error) {
     throw new HttpError(
@@ -124,3 +130,5 @@ export async function getPersonByIdentifier(identifier: string) {
     );
   }
 }
+
+export async function updatePersonData(personUri: string, person: PersonCreate): Promise<void> {}

@@ -3,62 +3,64 @@ import Router from 'express-promise-router';
 import { Request, Response } from 'express';
 
 import { HTTP_STATUS_CODE, HttpError } from '../utils/http-error';
-import { createPerson, getPersonByIdentifier } from '../services/person';
+import { PersonCreate, Person } from '../types';
+
+import {
+  createPerson,
+  getPersonByIdentifier,
+  updatePersonData,
+} from '../services/person';
 import { findPersonByIdentifierInOtherGraphs } from '../services/sudo';
 
 export const mergePersonRouter = Router();
 
 mergePersonRouter.post('/create', async (req: Request, res: Response) => {
-  const { firstName, lastName, alternativeName, identifier, birthDate } =
-    createPersonRequest(req);
-  const person = await findPerson(identifier);
+  const personCreateData = createPersonRequest(req);
+  const person = await findPerson(personCreateData.identifier);
   let personUri = person?.uri;
 
   if (person) {
-    throw new HttpError(
-      'Merge the person data',
-      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-    );
+    await mergePersonData(personUri, personCreateData, person);
   } else {
-    personUri = createPerson({
-      firstName,
-      lastName,
-      alternativeName,
-      identifier,
-      birthDate,
-    });
+    personUri = await createPerson(personCreateData);
   }
 
   res.status(HTTP_STATUS_CODE.CREATED).send({ personUri });
 });
 
-async function findPerson(identifier: string) {
+async function findPerson(identifier: string): Promise<null | Person> {
   const personInUserGraph = await getPersonByIdentifier(identifier);
   if (personInUserGraph) {
-    return {
-      ...personInUserGraph,
-      shouldCopyFromOtherGraph: false,
-    };
+    return personInUserGraph;
   }
 
   const personInOtherGraph =
     await findPersonByIdentifierInOtherGraphs(identifier);
   if (personInOtherGraph) {
-    return {
-      ...personInOtherGraph,
-      shouldCopyFromOtherGraph: true,
-    };
+    return personInOtherGraph;
   }
 
   return null;
 }
 
-function createPersonRequest(req: Request) {
+async function mergePersonData(
+  personUri: string,
+  personCreate: PersonCreate,
+  person: Person,
+): Promise<void> {
+  if (person.graph) {
+    // TODO: copy over the person and merge the data
+  }
+
+  await updatePersonData(personUri, personCreate);
+}
+
+function createPersonRequest(req: Request): PersonCreate {
   const requiredProperties = [
     'firstName',
     'lastName',
     'identifier',
-    'birthDate',
+    'birthdate',
   ];
   for (const property of requiredProperties) {
     if (!req.body[property]) {
@@ -69,10 +71,10 @@ function createPersonRequest(req: Request) {
     }
   }
 
-  const birthDate = new Date(req.body.birthDate);
-  if (isNaN(birthDate.getTime())) {
+  const birthdate = new Date(req.body.birthdate);
+  if (isNaN(birthdate.getTime())) {
     throw new HttpError(
-      'Please provide a valid date for "birthDate".',
+      'Please provide a valid date for "birthdate".',
       HTTP_STATUS_CODE.BAD_REQUEST,
     );
   }
@@ -83,6 +85,6 @@ function createPersonRequest(req: Request) {
     firstName: req.body.firstName?.trim(),
     lastName: req.body.lastName?.trim(),
     alternativeName: req.body.alternativeName?.trim(),
-    birthDate,
+    birthdate,
   };
 }
