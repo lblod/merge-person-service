@@ -8,9 +8,13 @@ import { PersonCreate, Person } from '../types';
 import {
   createPerson,
   getPersonByIdentifier,
+  insertBindingsInUserGraph,
   updatePersonData,
 } from '../services/person';
-import { findPersonByIdentifierInOtherGraphs } from '../services/sudo';
+import {
+  findPersonByIdentifierInOtherGraphs,
+  getConstructBindingsForPersonInGraph,
+} from '../services/sudo';
 
 export const mergePersonRouter = Router();
 
@@ -49,7 +53,11 @@ async function mergePersonData(
   person: Person,
 ): Promise<void> {
   if (person.graph) {
-    // TODO: copy over the person and merge the data
+    const personData = await getConstructBindingsForPersonInGraph(
+      personUri,
+      person.graph,
+    );
+    await insertBindingsInUserGraph(personData);
   }
 
   await updatePersonData(personUri, personCreate);

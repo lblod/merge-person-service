@@ -131,4 +131,6 @@ export async function getPersonByIdentifier(
   }
 }
 
+export async function insertBindingsInUserGraph(bindings): Promise<void> {}
+
 export async function updatePersonData(personUri: string, person: PersonCreate): Promise<void> {}

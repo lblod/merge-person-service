@@ -1,4 +1,4 @@
-import { sparqlEscapeString } from 'mu';
+import { sparqlEscapeString, sparqlEscapeUri } from 'mu';
 import { querySudo } from '@lblod/mu-auth-sudo';
 
 import { HttpError } from '../utils/http-error';
@@ -61,6 +61,67 @@ export async function findPersonByIdentifierInOtherGraphs(
   } catch (error) {
     throw new HttpError(
       `Something went wrong while searching for person with identifier: ${identifier} in all graphs.`,
+    );
+  }
+}
+
+export async function getConstructBindingsForPersonInGraph(
+  personUri: string,
+  graph: string,
+) {
+  try {
+    const queryResult = await querySudo(`
+      PREFIX person: <http://www.w3.org/ns/person#>
+      PREFIX persoon: <http://data.vlaanderen.be/ns/persoon#>
+      PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      PREFIX adms: <http://www.w3.org/ns/adms#>
+      PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+      PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+      PREFIX dct: <http://purl.org/dc/terms/>
+      CONSTRUCT {
+          ?person a person:Person ;
+            mu:uuid ?personId ;
+            persoon:gebruikteVoornaam ?firstName ;
+            foaf:name ?alternativeName ;
+            foaf:familyName ?lastName ;
+            adms:identifier ?identifier ;
+            persoon:heeftGeboorte ?geboorte ;
+            dct:modified ?now .
+          ?identifier a adms:Identifier ;
+            mu:uuid ?identifierId ;
+            skos:notation ?rrn ;
+            dct:modified ?now .
+          ?geboorte a persoon:Geboorte ;
+            mu:uuid ?geboorteId ;
+            persoon:datum ?birthdate ;
+            dct:modified ?now .
+    }
+      WHERE {
+        VALUES ?person { ${sparqlEscapeUri(personUri)} }
+        GRAPH ${sparqlEscapeUri(graph)} {
+          ?person a person:Person ;
+            mu:uuid ?personId ;
+            persoon:gebruikteVoornaam ?firstName ;
+            foaf:familyName ?lastName ;
+            adms:identifier ?identifier ;
+            persoon:heeftGeboorte ?geboorte .
+          ?identifier mu:uuid ?identifierId .
+          ?identifier skos:notation ?rrn .
+          ?geboorte mu:uuid ?geboorteId .
+          ?geboorte persoon:datum ?birthdate .
+          OPTIONAL {
+            ?person foaf:name ?alternativeName .
+          }           
+        }
+        BIND(NOW() AS ?now)
+      }
+    `);
+
+    return queryResult.results.bindings;
+  } catch (error) {
+    throw new HttpError(
+      `Something went wrong while trying to construct the person in graph: ${graph}`,
     );
   }
 }
