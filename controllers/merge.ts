@@ -3,17 +3,55 @@ import Router from 'express-promise-router';
 import { Request, Response } from 'express';
 
 import { HTTP_STATUS_CODE, HttpError } from '../utils/http-error';
+import { createPerson, getPersonByIdentifier } from '../services/person';
+import { findPersonByIdentifierInOtherGraphs } from '../services/sudo';
 
 export const mergePersonRouter = Router();
 
 mergePersonRouter.post('/create', async (req: Request, res: Response) => {
   const { firstName, lastName, alternativeName, identifier, birthDate } =
     createPersonRequest(req);
-  throw new HttpError(
-    'This endpoint is not done yet',
-    HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
-  );
+  const person = await findPerson(identifier);
+  let personUri = person?.uri;
+
+  if (person) {
+    throw new HttpError(
+      'Merge the person data',
+      HTTP_STATUS_CODE.INTERNAL_SERVER_ERROR,
+    );
+  } else {
+    personUri = createPerson({
+      firstName,
+      lastName,
+      alternativeName,
+      identifier,
+      birthDate,
+    });
+  }
+
+  res.status(HTTP_STATUS_CODE.CREATED).send({ personUri });
 });
+
+async function findPerson(identifier: string) {
+  const personInUserGraph = await getPersonByIdentifier(identifier);
+  if (personInUserGraph) {
+    return {
+      ...personInUserGraph,
+      shouldCopyFromOtherGraph: false,
+    };
+  }
+
+  const personInOtherGraph =
+    await findPersonByIdentifierInOtherGraphs(identifier);
+  if (personInOtherGraph) {
+    return {
+      ...personInOtherGraph,
+      shouldCopyFromOtherGraph: true,
+    };
+  }
+
+  return null;
+}
 
 function createPersonRequest(req: Request) {
   const requiredProperties = [
