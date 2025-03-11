@@ -40,22 +40,57 @@ export async function getPersonUris(): Promise<Array<string>> {
 }
 
 export async function getLastModifiedVersion(personUri: string) {
-  const queryResult = await querySudo(`
-    PREFIX dct: <http://purl.org/dc/terms/>
-    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+  try {
+    const queryResult = await querySudo(`
+      PREFIX persoon: <http://data.vlaanderen.be/ns/persoon#>
+      PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+      PREFIX adms: <http://www.w3.org/ns/adms#>
+      PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+      PREFIX dct: <http://purl.org/dc/terms/>
+      PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+  
+      SELECT ?person ?id ?firstName ?lastName ?alternativeName ?identifier ?geboorte ?g
+      WHERE {
+        GRAPH ?g {
+          VALUES ?person { ${sparqlEscapeUri(personUri)} }
+          ?person dct:modified ?modified ;
+            mu:uuid ?id ;
+            persoon:gebruikteVoornaam ?firstName ;
+            foaf:familyName ?lastName ;
+            adms:identifier ?identifier ;
+            persoon:heeftGeboorte ?geboorte .
+          
+          OPTIONAL {
+            ?person foaf:name ?alternativeName .
+          }
+        }  
+        ?g ext:ownedBy ?organization .
+      }
+      ORDER By DESC(?modified)
+      LIMIT 1
+    `);
 
-    SELECT ?person ?p ?o
-    WHERE {
-      GRAPH ?g {
-        VALUES ?person { ${sparqlEscapeUri(personUri)} }
-        ?person ?p ?o .
-        ?person dct:modified ?modified .
-      }  
-      ?g ext:ownedBy ?organization .
+    const results = queryResult.results?.bindings;
+
+    if (!results) {
+      console.log(`No baseline found for ${personUri}`);
     }
-    ORDER By DESC(?modified)
-  `);
-  console.log(queryResult);
+
+    return {
+      uri: personUri,
+      id: results[0].id.value,
+      firstName: results[0].firstName.value,
+      lastName: results[0].lastName.value,
+      alternativeName: results[0].alternativeName?.value,
+      identifierUri: results[0].identifier.value,
+      geboorteUri: results[0].geboorte.value,
+      graph: results[0].g.value,
+    };
+  } catch (error) {
+    throw new HttpError(
+      'Something went wrong while fetching the baseline person before merging the persons',
+    );
+  }
 }
 
 export async function createPerson(person: PersonCreate): Promise<string> {
