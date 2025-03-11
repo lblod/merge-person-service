@@ -1,9 +1,10 @@
 import { PROCESS_PERSONS_GRAPH } from '../app';
 import {
   countOfEntriesInGraph,
+  getFirstSubjectUriInGraph,
   movePersonUrisToGraph,
 } from '../services/merge';
-import { getPersonUris } from '../services/person';
+import { getLastModifiedVersion, getPersonUris } from '../services/person';
 
 export async function preparePersonProcessing() {
   const personProcessCount = await countOfEntriesInGraph(PROCESS_PERSONS_GRAPH);
@@ -20,7 +21,12 @@ export async function preparePersonProcessing() {
   }
 }
 
-export function createBatchesForItems(items: Array<string>, batchSize = 100) {
+export async function processPersonInProcessGraph() {
+  const personUri = await getFirstSubjectUriInGraph(PROCESS_PERSONS_GRAPH);
+  const baseLinePerson = await getLastModifiedVersion(personUri);
+}
+
+function createBatchesForItems(items: Array<string>, batchSize = 100) {
   const batches = [];
   for (let i = 0; i < items.length; i += batchSize) {
     batches.push(items.slice(i, i + batchSize));

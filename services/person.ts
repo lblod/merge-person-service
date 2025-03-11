@@ -39,6 +39,25 @@ export async function getPersonUris(): Promise<Array<string>> {
   }
 }
 
+export async function getLastModifiedVersion(personUri: string) {
+  const queryResult = await querySudo(`
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+    SELECT ?person ?p ?o
+    WHERE {
+      GRAPH ?g {
+        VALUES ?person { ${sparqlEscapeUri(personUri)} }
+        ?person ?p ?o .
+        ?person dct:modified ?modified .
+      }  
+      ?g ext:ownedBy ?organization .
+    }
+    ORDER By DESC(?modified)
+  `);
+  console.log(queryResult);
+}
+
 export async function createPerson(person: PersonCreate): Promise<string> {
   const { firstName, lastName, alternativeName, identifier, birthdate } =
     person;

@@ -1,6 +1,9 @@
 import { CronJob } from 'cron';
 
-import { preparePersonProcessing } from './controllers/merge';
+import {
+  preparePersonProcessing,
+  processPersonInProcessGraph,
+} from './controllers/merge';
 
 export const PROCESS_PERSONS_GRAPH =
   'http://mu.semte.ch/vocabularies/ext/persons-to-process';
@@ -15,6 +18,7 @@ CronJob.from({
     console.log(`# Time: ${new Date().toJSON()}`);
 
     await preparePersonProcessing();
+    await processPersonInProcessGraph();
   },
   onComplete: () => {
     console.log('# Merge person cron completed successfully');

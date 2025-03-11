@@ -49,3 +49,18 @@ export async function movePersonUrisToGraph(
     );
   }
 }
+
+export async function getFirstSubjectUriInGraph(
+  graph: string,
+): Promise<string | null> {
+  const queryResult = await querySudo(`
+    SELECT ?s
+    WHERE {
+      GRAPH ${sparqlEscapeUri(graph)} {
+        ?s ?p ?o .
+      }
+    } LIMIT 1
+  `);
+
+  return queryResult.results?.bindings[0].s.value || null;
+}
