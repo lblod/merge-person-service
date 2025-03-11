@@ -5,10 +5,39 @@ import {
   sparqlEscapeUri,
   update,
 } from 'mu';
+import { querySudo } from '@lblod/mu-auth-sudo';
 import { v4 as uuid } from 'uuid';
 
 import { HttpError } from '../utils/http-error';
 import { Person, PersonCreate } from '../types';
+
+export async function getPersonUris(): Promise<Array<string>> {
+  try {
+    const queryResult = await querySudo(`
+      PREFIX person: <http://www.w3.org/ns/person#>
+      PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+
+      SELECT DISTINCT ?person
+      WHERE {
+        GRAPH ?g {
+          ?person a person:Person .
+        }
+        ?g ext:ownedBy ?organization .
+      }  
+    `);
+    const results = queryResult.results?.bindings;
+
+    if (!results || results.length === 0) {
+      return [];
+    }
+
+    return results.map((b) => b.person.value);
+  } catch (error) {
+    throw new HttpError(
+      'Something went wrong while fetching all unique persons in the database.',
+    );
+  }
+}
 
 export async function createPerson(person: PersonCreate): Promise<string> {
   const { firstName, lastName, alternativeName, identifier, birthdate } =
@@ -130,5 +159,3 @@ export async function getPersonByIdentifier(
     );
   }
 }
-
-export async function updatePersonData(personUri: string, person: PersonCreate): Promise<void> {}

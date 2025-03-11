@@ -1,36 +1,23 @@
-import { app } from 'mu';
+import { CronJob } from 'cron';
 
-import express, { Request, Response, ErrorRequestHandler } from 'express';
-import bodyParser from 'body-parser';
+import { preparePersonProcessing } from './controllers/merge';
 
-import { mergePersonRouter } from './controllers/merge';
+export const PROCESS_PERSONS_GRAPH =
+  'http://mu.semte.ch/vocabularies/ext/persons-to-process';
 
-app.use(
-  bodyParser.json({
-    limit: '500mb',
-    type: function (req: Request) {
-      return /^application\/json/.test(req.get('content-type') as string);
-    },
-  }),
-);
+const CRON_TIME = process.env.CRON_TIME || '0 8 * * 1-5'; // Every weekday at 8am
+CronJob.from({
+  cronTime: CRON_TIME,
+  onTick: async () => {
+    console.log(
+      '\n############################### Merge Person CRON  ###############################',
+    );
+    console.log(`# Time: ${new Date().toJSON()}`);
 
-app.use(express.urlencoded({ extended: true }));
-
-app.get('/health-check', async (req: Request, res: Response) => {
-  res.send({ status: 'ok' });
+    await preparePersonProcessing();
+  },
+  onComplete: () => {
+    console.log('# Merge person cron completed successfully');
+  },
+  start: true,
 });
-
-app.use('/merge-person', mergePersonRouter);
-
-const errorHandler: ErrorRequestHandler = function (err, _req, res, _next) {
-  // custom error handler to have a default 500 error code instead of 400 as in the template
-  res.status(err.status || 500);
-  res.json({
-    error: {
-      title: err.message,
-      description: err.description?.join('\n'),
-    },
-  });
-};
-
-app.use(errorHandler);

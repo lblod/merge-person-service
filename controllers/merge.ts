@@ -1,98 +1,29 @@
-import Router from 'express-promise-router';
-
-import { Request, Response } from 'express';
-
-import { HTTP_STATUS_CODE, HttpError } from '../utils/http-error';
-import { PersonCreate, Person } from '../types';
-
+import { PROCESS_PERSONS_GRAPH } from '../app';
 import {
-  createPerson,
-  getPersonByIdentifier,
-  updatePersonData,
-} from '../services/person';
-import {
-  findPersonByIdentifierInOtherGraphs,
-  getConstructBindingsForPersonInGraph,
-} from '../services/sudo';
-import { insertBindings } from '../services/generic';
+  countOfEntriesInGraph,
+  movePersonUrisToGraph,
+} from '../services/merge';
+import { getPersonUris } from '../services/person';
 
-export const mergePersonRouter = Router();
+export async function preparePersonProcessing() {
+  const personProcessCount = await countOfEntriesInGraph(PROCESS_PERSONS_GRAPH);
+  if (personProcessCount === 0) {
+    const personUris = await getPersonUris();
+    const personUriBatches = createBatchesForItems(personUris);
 
-mergePersonRouter.post('/create', async (req: Request, res: Response) => {
-  const personCreateData = createPersonRequest(req);
-  const person = await findPerson(personCreateData.identifier);
-  let personUri = person?.uri;
-
-  if (person) {
-    await mergePersonData(personUri, personCreateData, person);
-  } else {
-    personUri = await createPerson(personCreateData);
-  }
-
-  res.status(HTTP_STATUS_CODE.CREATED).send({ personUri });
-});
-
-async function findPerson(identifier: string): Promise<null | Person> {
-  const personInUserGraph = await getPersonByIdentifier(identifier);
-  if (personInUserGraph) {
-    return personInUserGraph;
-  }
-
-  const personInOtherGraph =
-    await findPersonByIdentifierInOtherGraphs(identifier);
-  if (personInOtherGraph) {
-    return personInOtherGraph;
-  }
-
-  return null;
-}
-
-async function mergePersonData(
-  personUri: string,
-  personCreate: PersonCreate,
-  person: Person,
-): Promise<void> {
-  if (person.graph) {
-    const personData = await getConstructBindingsForPersonInGraph(
-      personUri,
-      person.graph,
-    );
-    await insertBindings(personData);
-  }
-
-  await updatePersonData(personUri, personCreate);
-}
-
-function createPersonRequest(req: Request): PersonCreate {
-  const requiredProperties = [
-    'firstName',
-    'lastName',
-    'identifier',
-    'birthdate',
-  ];
-  for (const property of requiredProperties) {
-    if (!req.body[property]) {
-      throw new HttpError(
-        `Property "${property}" is required when creating a new person`,
-        HTTP_STATUS_CODE.BAD_REQUEST,
-      );
+    for (const uriBatch of personUriBatches) {
+      await movePersonUrisToGraph(uriBatch, PROCESS_PERSONS_GRAPH);
     }
+    console.log(`# Moved ${personUris.length} person uris to process graph`);
+  } else {
+    console.log(`# Still processing ${personProcessCount} persons`);
   }
+}
 
-  const birthdate = new Date(req.body.birthdate);
-  if (isNaN(birthdate.getTime())) {
-    throw new HttpError(
-      'Please provide a valid date for "birthdate".',
-      HTTP_STATUS_CODE.BAD_REQUEST,
-    );
+export function createBatchesForItems(items: Array<string>, batchSize = 100) {
+  const batches = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    batches.push(items.slice(i, i + batchSize));
   }
-
-  return {
-    // eslint-disable-next-line no-useless-escape
-    identifier: req.body.identifier.replace(/[\.-]/g, ''),
-    firstName: req.body.firstName?.trim(),
-    lastName: req.body.lastName?.trim(),
-    alternativeName: req.body.alternativeName?.trim(),
-    birthdate,
-  };
+  return batches;
 }
