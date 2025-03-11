@@ -3,6 +3,8 @@ import {
   countOfEntriesInGraph,
   getFirstSubjectUriInGraph,
   movePersonUrisToGraph,
+  removePersonFromProcessGraph,
+  updatePersonsFromPersonInGraph,
 } from '../services/merge';
 import { getLastModifiedVersion, getPersonUris } from '../services/person';
 
@@ -23,7 +25,10 @@ export async function preparePersonProcessing() {
 
 export async function processPersonInProcessGraph() {
   const personUri = await getFirstSubjectUriInGraph(PROCESS_PERSONS_GRAPH);
-  const baseLinePerson = await getLastModifiedVersion(personUri);
+  const { uri, graph } = await getLastModifiedVersion(personUri);
+
+  await updatePersonsFromPersonInGraph(uri, graph);
+  await removePersonFromProcessGraph(uri);
 }
 
 function createBatchesForItems(items: Array<string>, batchSize = 100) {

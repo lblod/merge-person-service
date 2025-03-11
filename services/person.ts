@@ -49,20 +49,11 @@ export async function getLastModifiedVersion(personUri: string) {
       PREFIX dct: <http://purl.org/dc/terms/>
       PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
   
-      SELECT ?person ?id ?firstName ?lastName ?alternativeName ?identifier ?geboorte ?g
+      SELECT ?person ?g
       WHERE {
         GRAPH ?g {
           VALUES ?person { ${sparqlEscapeUri(personUri)} }
-          ?person dct:modified ?modified ;
-            mu:uuid ?id ;
-            persoon:gebruikteVoornaam ?firstName ;
-            foaf:familyName ?lastName ;
-            adms:identifier ?identifier ;
-            persoon:heeftGeboorte ?geboorte .
-          
-          OPTIONAL {
-            ?person foaf:name ?alternativeName .
-          }
+          ?person dct:modified ?modified .
         }  
         ?g ext:ownedBy ?organization .
       }
@@ -78,12 +69,6 @@ export async function getLastModifiedVersion(personUri: string) {
 
     return {
       uri: personUri,
-      id: results[0].id.value,
-      firstName: results[0].firstName.value,
-      lastName: results[0].lastName.value,
-      alternativeName: results[0].alternativeName?.value,
-      identifierUri: results[0].identifier.value,
-      geboorteUri: results[0].geboorte.value,
       graph: results[0].g.value,
     };
   } catch (error) {
