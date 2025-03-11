@@ -8,13 +8,13 @@ import { PersonCreate, Person } from '../types';
 import {
   createPerson,
   getPersonByIdentifier,
-  insertBindingsInUserGraph,
   updatePersonData,
 } from '../services/person';
 import {
   findPersonByIdentifierInOtherGraphs,
   getConstructBindingsForPersonInGraph,
 } from '../services/sudo';
+import { insertBindings } from '../services/generic';
 
 export const mergePersonRouter = Router();
 
@@ -57,7 +57,7 @@ async function mergePersonData(
       personUri,
       person.graph,
     );
-    await insertBindingsInUserGraph(personData);
+    await insertBindings(personData);
   }
 
   await updatePersonData(personUri, personCreate);
