@@ -79,7 +79,7 @@ export async function getPersonAndConflictWithIsInConflictFlag(
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-    SELECT ?person ?conflict ?isConflicting
+    SELECT DISTINCT ?person ?conflict ?isConflicting
     WHERE {
       VALUES ( ?conflict ?person ) {
         ${values.join('\n')}
