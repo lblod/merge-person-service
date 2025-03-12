@@ -12,18 +12,30 @@ export async function addIsConflictingFlagToPersons(
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
     PREFIX person: <http://www.w3.org/ns/person#>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX dct: <http://purl.org/dc/terms/>
 
+    DELETE {
+      GRAPH ?g {
+        ?person dct:modified ?modified .
+      }
+    }
     INSERT {
       GRAPH ?g {
         ?person ext:isInConflict """true"""^^xsd:Boolean .
+        ?person dct:modified ?modified .
       }
     }
     WHERE {
       VALUES ?person { ${values.join('\n')} }
       GRAPH ?g {
         ?person a person:Person .
+
+        OPTIONAL {
+          ?person dct:modified ?modified .
+        }
       }
       ?g ext:ownedBy ?organization .
+      BIND(NOW() AS ?now)
     }
   `;
 
@@ -69,7 +81,10 @@ export async function updateConflictUsageToPersonAsSubject(
       } 
       GRAPH ?g {
         ?conflict ?p ?o .
-        ?conflict dct:modified ?modified .
+        
+        OPTIONAL {
+          ?conflict dct:modified ?modified .
+        }
       }
       ?g ext:ownedBy ?organization .
       BIND(NOW() AS ?now)
@@ -115,7 +130,10 @@ export async function updateConflictUsageToPersonAsObject(
       } 
       GRAPH ?g {
         ?s ?p ?conflict.
-        ?s dct:modified ?modified .
+
+        OPTIONAL {
+          ?s dct:modified ?modified .
+        }
       } 
       ?g ext:ownedBy ?organization .
       BIND(NOW() AS ?now)

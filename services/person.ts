@@ -128,14 +128,13 @@ export async function getPersonUrisWithDataMismatch(
 
   try {
     const queryResult = await querySudo(queryString);
-
     const bindings = queryResult.results?.bindings;
 
     return bindings
       .map((b) => {
         return {
           personUri: b.person?.value,
-          conflictUri: b.person?.value,
+          conflictUri: b.conflict?.value,
           hasConflictingData: b.isConflicting?.value == 'true' ? true : false,
         };
       })
@@ -165,6 +164,7 @@ export async function setupTombstoneForConflicts(
     DELETE {
       GRAPH ?g {
         ?conflict a person:Person .
+        ?conflict dct:modified ?modified .
       }
     }
     INSERT{
@@ -184,6 +184,10 @@ export async function setupTombstoneForConflicts(
       } 
       GRAPH ?g {
         ?conflict a person:Person .
+        
+        OPTIONAL {
+          ?conflict dct:modified ?modified .
+        }
       } 
       ?g ext:ownedBy ?organization .
       BIND(NOW() AS ?now)
