@@ -20,7 +20,6 @@ export async function processConflictingPersons(
   }
 
   const batches = createBatchesForConflicts(conflicts, batchSize);
-
   for (const batch of batches) {
     log(`Starting on batch ${batches.indexOf(batch) + 1}/${batches.length}`);
     const dataMisMatchPersonUris = await getPersonUrisWithDataMismatch(batch);
