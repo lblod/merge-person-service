@@ -48,9 +48,9 @@ export async function getConflictingPersons(): Promise<Array<Conflict>> {
   }
 }
 
-export async function getPersonAndConflictWithIsConflictingFlag(
+export async function getPersonUrisWithDataMismatch(
   batch: Array<Conflict>,
-) {
+): Promise<Array<string>> {
   const values = batch.map(
     (b) =>
       `( ${sparqlEscapeUri(b.conflictUri)} ${sparqlEscapeUri(b.personUri)} )`,
@@ -118,16 +118,20 @@ export async function getPersonAndConflictWithIsConflictingFlag(
 
     const bindings = queryResult.results?.bindings;
 
-    return bindings.map((b) => {
-      return {
-        personUri: b.person?.value,
-        conflictUri: b.person?.value,
-        hasConflictingData: b.isConflicting?.value,
-      };
-    });
+    return bindings
+      .map((b) => {
+        return {
+          personUri: b.person?.value,
+          conflictUri: b.person?.value,
+          hasConflictingData: b.isConflicting?.value,
+        };
+      })
+      .filter((p: Conflict) => p.hasConflictingData);
   } catch (error) {
     throw new CustomError(
-      'Something went wrong while querying for data missmatches for the person conflicts.',
+      'Something went wrong while querying for data missmatches for the person with conflicts.',
     );
   }
 }
+
+export async function setupTombstoneForConflicts(conflict: Array<Conflict>): Promise<void> { }
