@@ -19,7 +19,7 @@ export async function processConflictingPersons(
   const dataMisMatchPersonUris = await getPersonUrisWithDataMismatch(
     batches[0],
   );
-  await addIsConflictingFlagToPersons(dataMisMatchPersonUris);
+  // await addIsConflictingFlagToPersons(dataMisMatchPersonUris);
 
   await mergeConflictsWithPerson(conflicts);
   // }
@@ -36,5 +36,5 @@ function createBatchesForConflicts(items: Array<Conflict>, batchSize: number) {
 async function mergeConflictsWithPerson(conflicts: Array<Conflict>) {
   await updateConflictUsageToPersonAsSubject(conflicts);
   await updateConflictUsageToPersonAsObject(conflicts);
-  await setupTombstoneForConflicts(conflicts);
+  // await setupTombstoneForConflicts(conflicts);
 }

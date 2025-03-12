@@ -1,4 +1,4 @@
-import { querySudo } from '@lblod/mu-auth-sudo';
+import { querySudo, updateSudo } from '@lblod/mu-auth-sudo';
 import { sparqlEscapeUri } from 'mu';
 
 import { Conflict } from '../types';
@@ -134,4 +134,48 @@ export async function getPersonUrisWithDataMismatch(
   }
 }
 
-export async function setupTombstoneForConflicts(conflict: Array<Conflict>): Promise<void> { }
+export async function setupTombstoneForConflicts(
+  conflicts: Array<Conflict>,
+): Promise<void> {
+  const values = conflicts.map(
+    (c) =>
+      `( ${sparqlEscapeUri(c.personUri)} ${sparqlEscapeUri(c.conflictUri)} )`,
+  );
+  const queryString = `
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+    PREFIX person: <http://www.w3.org/ns/person#>
+    PREFIX astreams: <http://www.w3.org/ns/activitystreams#>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+    INSERT{
+      GRAPH ?g {
+        ?person dct:modified ?now .
+        
+        ?conflict a astreams:Tombstone.
+        ?conflict dct:modified ?now .
+        ?conflict astreams:deleted ?now .
+        ?conflict astreams:formerType person:Person .
+        ?conflict owl:sameAs ?person .
+      }
+    }
+    WHERE {
+      VALUES ( ?conflict ?person ) {
+        ${values.join('\n')}
+      } 
+      GRAPH ?g {
+        ?conflict a person:Person .
+      } 
+      ?g ext:ownedBy ?organization .
+      BIND(NOW() AS ?now)
+    }
+  `;
+
+  try {
+    await updateSudo(queryString);
+  } catch (error) {
+    throw new CustomError(
+      'Something went wrong while creating tombstones for the conflicting persons.',
+    );
+  }
+}

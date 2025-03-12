@@ -28,7 +28,7 @@ export async function addIsConflictingFlagToPersons(
   `;
 
   try {
-    // await updateSudo(queryString);
+    await updateSudo(queryString);
   } catch (error) {
     throw new CustomError(
       `Something went wrong while adding ext:isInConflict flag to ${personUris.length} persons.`,
@@ -36,5 +36,9 @@ export async function addIsConflictingFlagToPersons(
   }
 }
 
-export async function updateConflictUsageToPersonAsSubject(conflicts: Array<Conflict>): Promise<void> { }
-export async function updateConflictUsageToPersonAsObject(conflicts: Array<Conflict>): Promise<void> { }
+export async function updateConflictUsageToPersonAsSubject(
+  conflicts: Array<Conflict>,
+): Promise<void> {}
+export async function updateConflictUsageToPersonAsObject(
+  conflicts: Array<Conflict>,
+): Promise<void> {}
