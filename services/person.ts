@@ -61,9 +61,9 @@ export async function getConflictingPersons(
   }
 }
 
-export async function getPersonUrisWithDataMismatch(
+export async function getPersonAndConflictWithIsInConflictFlag(
   batch: Array<Conflict>,
-): Promise<Array<string>> {
+): Promise<Array<Conflict>> {
   const values = batch.map(
     (b) =>
       `( ${sparqlEscapeUri(b.conflictUri)} ${sparqlEscapeUri(b.personUri)} )`,
@@ -136,16 +136,13 @@ export async function getPersonUrisWithDataMismatch(
     const queryResult = await querySudo(queryString);
     const bindings = queryResult.results?.bindings;
 
-    return bindings
-      .map((b) => {
-        return {
-          personUri: b.person?.value,
-          conflictUri: b.conflict?.value,
-          hasConflictingData: b.isConflicting?.value == 'true' ? true : false,
-        };
-      })
-      .filter((p: Conflict) => p.hasConflictingData)
-      .map((p: Conflict) => p.conflictUri);
+    return bindings.map((b) => {
+      return {
+        personUri: b.person?.value,
+        conflictUri: b.conflict?.value,
+        hasConflictingData: b.isConflicting?.value == 'true' ? true : false,
+      };
+    });
   } catch (error) {
     throw new CustomError(
       'Something went wrong while querying for data missmatches for the person with conflicts.',

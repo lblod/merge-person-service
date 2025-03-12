@@ -4,7 +4,7 @@ import {
   updateConflictUsageToPersonAsSubject,
 } from '../services/merge';
 import {
-  getPersonUrisWithDataMismatch,
+  getPersonAndConflictWithIsInConflictFlag,
   setupTombstoneForConflicts,
 } from '../services/person';
 import { Conflict } from '../types';
@@ -22,12 +22,20 @@ export async function processConflictingPersons(
   const batches = createBatchesForConflicts(conflicts, batchSize);
   for (const batch of batches) {
     log(`Starting on batch ${batches.indexOf(batch) + 1}/${batches.length}`);
-    const dataMisMatchPersonUris = await getPersonUrisWithDataMismatch(batch);
-    await addIsConflictingFlagToPersons(dataMisMatchPersonUris);
+    const personsWithConflictAndFlag =
+      await getPersonAndConflictWithIsInConflictFlag(batch);
 
-    await updateConflictUsageToPersonAsSubject(conflicts);
-    await updateConflictUsageToPersonAsObject(conflicts);
-    await setupTombstoneForConflicts(conflicts);
+    const withFlag = personsWithConflictAndFlag
+      .filter((p: Conflict) => p.hasConflictingData)
+      .map((p: Conflict) => p.conflictUri);
+    await addIsConflictingFlagToPersons(withFlag);
+
+    const withoutFlag = personsWithConflictAndFlag.filter(
+      (p: Conflict) => !p.hasConflictingData,
+    );
+    await updateConflictUsageToPersonAsSubject(withoutFlag);
+    await updateConflictUsageToPersonAsObject(withoutFlag);
+    await setupTombstoneForConflicts(withoutFlag);
   }
 }
 
