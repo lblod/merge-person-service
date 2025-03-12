@@ -4,7 +4,10 @@ import { sparqlEscapeUri } from 'mu';
 import { Conflict } from '../types';
 import { CustomError } from '../utils/custom-error';
 
-export async function getConflictingPersons(): Promise<Array<Conflict>> {
+export async function getConflictingPersons(
+  batchSize: number | undefined,
+): Promise<Array<Conflict>> {
+  const limit = batchSize ? `LIMIT ${batchSize}` : '';
   const queryString = `
     PREFIX adms: <http://www.w3.org/ns/adms#>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
@@ -35,7 +38,7 @@ export async function getConflictingPersons(): Promise<Array<Conflict>> {
       ?g2 ext:ownedBy ?organization2 .
 
       FILTER(?person < ?conflict)
-    } 
+    } ${limit}
   `;
   try {
     const queryResult = await querySudo(queryString);
@@ -159,6 +162,11 @@ export async function setupTombstoneForConflicts(
     PREFIX astreams: <http://www.w3.org/ns/activitystreams#>
     PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
+    DELETE {
+      GRAPH ?g {
+        ?conflict a person:Person .
+      }
+    }
     INSERT{
       GRAPH ?g {
         ?person dct:modified ?now .

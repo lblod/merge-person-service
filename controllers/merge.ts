@@ -8,19 +8,21 @@ import {
   setupTombstoneForConflicts,
 } from '../services/person';
 import { Conflict } from '../types';
+import { log } from '../utils/logger';
 
 export async function processConflictingPersons(
   conflicts: Array<Conflict>,
   batchSize: number,
 ) {
   if (conflicts.length === 0) {
-    console.log('\n# No conflicts found nothing process.');
+    log('No conflicts found nothing process');
     return;
   }
 
   const batches = createBatchesForConflicts(conflicts, batchSize);
 
   for (const batch of batches) {
+    log(`Starting on batch ${batches.indexOf(batch) + 1}/${batches.length}`);
     const dataMisMatchPersonUris = await getPersonUrisWithDataMismatch(batch);
     await addIsConflictingFlagToPersons(dataMisMatchPersonUris);
 
