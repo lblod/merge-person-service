@@ -3,7 +3,7 @@ services:
     image: semtech/mu-javascript-template:latest
     restart: 'no'
     labels:
-      - 'logging=true'
+      - 'logging=false'
     environment:
       NODE_ENV: development
       NO_BABEL_NODE: true

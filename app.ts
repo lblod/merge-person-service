@@ -13,7 +13,7 @@ CronJob.from({
       '\n############################### Merge Person CRON  ###############################',
     );
     const conflictingPersons = await getConflictingPersons();
-    console.log(`\n# Found ${conflictingPersons.length} conflicting persons`);
+    console.log(`\n# Found ${conflictingPersons?.length} conflicting persons`);
     await processConflictingPersons(conflictingPersons, BATCH_SIZE);
   },
   onComplete: () => {

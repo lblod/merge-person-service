@@ -13,16 +13,21 @@ export async function processConflictingPersons(
   conflicts: Array<Conflict>,
   batchSize: number,
 ) {
+  if (conflicts.length === 0) {
+    console.log('\n# No conflicts found nothing process.');
+    return;
+  }
+
   const batches = createBatchesForConflicts(conflicts, batchSize);
 
-  // for (const batch of batches) {
-  const dataMisMatchPersonUris = await getPersonUrisWithDataMismatch(
-    batches[0],
-  );
-  // await addIsConflictingFlagToPersons(dataMisMatchPersonUris);
+  for (const batch of batches) {
+    const dataMisMatchPersonUris = await getPersonUrisWithDataMismatch(batch);
+    await addIsConflictingFlagToPersons(dataMisMatchPersonUris);
 
-  await mergeConflictsWithPerson(conflicts);
-  // }
+    await updateConflictUsageToPersonAsSubject(conflicts);
+    await updateConflictUsageToPersonAsObject(conflicts);
+    await setupTombstoneForConflicts(conflicts);
+  }
 }
 
 function createBatchesForConflicts(items: Array<Conflict>, batchSize: number) {
@@ -31,10 +36,4 @@ function createBatchesForConflicts(items: Array<Conflict>, batchSize: number) {
     batches.push(items.slice(i, i + batchSize));
   }
   return batches;
-}
-
-async function mergeConflictsWithPerson(conflicts: Array<Conflict>) {
-  await updateConflictUsageToPersonAsSubject(conflicts);
-  await updateConflictUsageToPersonAsObject(conflicts);
-  // await setupTombstoneForConflicts(conflicts);
 }

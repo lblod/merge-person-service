@@ -10,21 +10,31 @@ export async function getConflictingPersons(): Promise<Array<Conflict>> {
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
     PREFIX person: <http://www.w3.org/ns/person#>
 
-    SELECT DISTINCT ?person ?match
+    SELECT DISTINCT ?person ?conflict
     WHERE {
       GRAPH ?g {
         ?person a person:Person .
         ?person adms:identifier / skos:notation ?rrn .
+
+        OPTIONAL {
+          ?person ext:isInConflict ?isInConflict .
+        }
+        FILTER(!BOUND(?isInConflict) || ?isInConflict = false)
       } 
       ?g ext:ownedBy ?organization .
 
       GRAPH ?g2 {
-        ?match a person:Person .
-        ?match adms:identifier / skos:notation ?rrn .
+        ?conflict a person:Person .
+        ?conflict adms:identifier / skos:notation ?rrn .
+
+        OPTIONAL {
+          ?conflict ext:isInConflict ?isInConflict .
+        }
+        FILTER(!BOUND(?isInConflict) || ?isInConflict = false)
       } 
       ?g2 ext:ownedBy ?organization2 .
 
-      FILTER(?person < ?match)
+      FILTER(?person < ?conflict)
     } 
   `;
   try {
@@ -38,7 +48,7 @@ export async function getConflictingPersons(): Promise<Array<Conflict>> {
     return bindings.map((b) => {
       return {
         personUri: b.person.value,
-        conflictUri: b.match.value,
+        conflictUri: b.conflict.value,
       };
     });
   } catch (error) {
@@ -123,10 +133,11 @@ export async function getPersonUrisWithDataMismatch(
         return {
           personUri: b.person?.value,
           conflictUri: b.person?.value,
-          hasConflictingData: b.isConflicting?.value,
+          hasConflictingData: b.isConflicting?.value == 'true' ? true : false,
         };
       })
-      .filter((p: Conflict) => p.hasConflictingData);
+      .filter((p: Conflict) => p.hasConflictingData)
+      .map((p: Conflict) => p.conflictUri);
   } catch (error) {
     throw new CustomError(
       'Something went wrong while querying for data missmatches for the person with conflicts.',
