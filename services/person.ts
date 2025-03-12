@@ -98,6 +98,9 @@ export async function getPersonUrisWithDataMismatch(
         OPTIONAL {
           ?person persoon:heeftGeboorte / persoon:datum ?birthdate .
         }
+        OPTIONAL {
+          ?persoon persoon:geslacht ?geslacht .
+        }
       }
       GRAPH ?g2 {
         ?person a person:Person .
@@ -113,12 +116,15 @@ export async function getPersonUrisWithDataMismatch(
         OPTIONAL {
           ?conflict persoon:heeftGeboorte / persoon:datum ?conflictBirthdate .
         }
+        OPTIONAL {
+          ?conflict persoon:geslacht ?conflictGeslacht .
+        }
       } 
       ?g ext:ownedBy ?organization .
       ?g2 ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
       BIND(
-        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictRrn = ?rrn && ?conflictBirthdate = ?birthdate,
+        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictRrn = ?rrn && ?conflictBirthdate = ?birthdate && ?conflictGeslacht != ?geslacht,
             """false"""^^xsd:Boolean,
             """true"""^^xsd:Boolean
           )
