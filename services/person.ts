@@ -10,7 +10,7 @@ export async function getConflictingPersons(): Promise<Array<Conflict>> {
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
     PREFIX person: <http://www.w3.org/ns/person#>
 
-    SELECT ?person ?match
+    SELECT DISTINCT ?person ?match
     WHERE {
       GRAPH ?g {
         ?person a person:Person .
@@ -27,19 +27,25 @@ export async function getConflictingPersons(): Promise<Array<Conflict>> {
       FILTER(?person < ?match)
     } 
   `;
-  const queryResult = await querySudo(queryString);
-  const bindings = queryResult.results?.bindings;
+  try {
+    const queryResult = await querySudo(queryString);
+    const bindings = queryResult.results?.bindings;
 
-  if (!bindings || bindings.length === 0) {
-    return null;
+    if (!bindings || bindings.length === 0) {
+      return null;
+    }
+
+    return bindings.map((b) => {
+      return {
+        personUri: b.person.value,
+        conflictUri: b.match.value,
+      };
+    });
+  } catch (error) {
+    throw new CustomError(
+      'Something went wrong while querying the person conflicts',
+    );
   }
-
-  return bindings.map((b) => {
-    return {
-      personUri: b.person.value,
-      conflictUri: b.match.value,
-    };
-  });
 }
 
 export async function getPersonAndConflictWithIsConflictingFlag(
