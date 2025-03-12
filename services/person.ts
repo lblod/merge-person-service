@@ -87,21 +87,6 @@ export async function getPersonUrisWithDataMismatch(
       GRAPH ?g {
         ?conflict a person:Person.
         OPTIONAL {
-          ?conflict persoon:gebruikteVoornaam ?conflictFirstName .
-        }
-        OPTIONAL {
-          ?conflict foaf:familyName ?conflictLastName .
-        }
-        OPTIONAL {
-          ?conflict adms:identifier / skos:notation ?conflictRrn .
-        }
-        OPTIONAL {
-          ?conflict persoon:heeftGeboorte / persoon:datum ?conflictBirthdate .
-        }
-      }
-      GRAPH ?g2 {
-        ?person a person:Person .
-        OPTIONAL {
           ?person persoon:gebruikteVoornaam ?firstName .
         }
         OPTIONAL {
@@ -112,6 +97,21 @@ export async function getPersonUrisWithDataMismatch(
         }
         OPTIONAL {
           ?person persoon:heeftGeboorte / persoon:datum ?birthdate .
+        }
+      }
+      GRAPH ?g2 {
+        ?person a person:Person .
+        OPTIONAL {
+          ?conflict persoon:gebruikteVoornaam ?conflictFirstName .
+        }
+        OPTIONAL {
+          ?conflict foaf:familyName ?conflictLastName .
+        }
+        OPTIONAL {
+          ?conflict adms:identifier / skos:notation ?conflictRrn .
+        }
+        OPTIONAL {
+          ?conflict persoon:heeftGeboorte / persoon:datum ?conflictBirthdate .
         }
       } 
       ?g ext:ownedBy ?organization .
@@ -152,7 +152,7 @@ export async function setupTombstoneForConflicts(
 ): Promise<void> {
   const values = conflicts.map(
     (c) =>
-      `( ${sparqlEscapeUri(c.personUri)} ${sparqlEscapeUri(c.conflictUri)} )`,
+      `( ${sparqlEscapeUri(c.conflictUri)} ${sparqlEscapeUri(c.personUri)} )`,
   );
   const queryString = `
     PREFIX dct: <http://purl.org/dc/terms/>
