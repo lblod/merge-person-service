@@ -8,7 +8,6 @@ import {
   setupTombstoneForConflicts,
 } from '../services/person';
 import { Conflict } from '../types';
-import { CustomError } from '../utils/custom-error';
 import { log } from '../utils/logger';
 
 export async function processConflictingPersons(
@@ -25,12 +24,6 @@ export async function processConflictingPersons(
     log(`Starting on batch ${batches.indexOf(batch) + 1}/${batches.length}`);
     const personsWithConflictAndFlag = await getConflictingPersonUris(batch);
 
-    if (personsWithConflictAndFlag.length !== batch.length) {
-      throw new CustomError(
-        'More conflict results where found than there are persons in this batch. This means an optional value in the query is not returning a value. Please lower the batch size to one to find out what person is causing this issue.',
-      );
-    }
-    console.log({ personsWithConflictAndFlag });
     const withFlag = personsWithConflictAndFlag.filter(
       (p: Conflict) => p.hasConflictingData,
     );
@@ -52,7 +45,7 @@ function createBatchesForConflicts(
   batchSize: number,
 ): Array<Array<Conflict>> {
   const batches = [];
-  for (let i = 0;i < items.length;i += batchSize) {
+  for (let i = 0; i < items.length; i += batchSize) {
     batches.push(items.slice(i, i + batchSize));
   }
   return batches;
