@@ -7,7 +7,13 @@ import { Conflict } from '../types';
 export async function addIsConflictingFlagToPersons(
   personUris: Array<string>,
 ): Promise<void> {
-  const values = personUris.map((uri) => sparqlEscapeUri(uri));
+  if (personUris.length === 0) {
+    return;
+  }
+
+  const values = Array.from(new Set(personUris)).map((uri) =>
+    sparqlEscapeUri(uri),
+  );
   const queryString = `
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
     PREFIX person: <http://www.w3.org/ns/person#>

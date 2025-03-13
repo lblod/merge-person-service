@@ -3,11 +3,12 @@ services:
     image: semtech/mu-javascript-template:latest
     restart: 'no'
     labels:
-      - 'logging=false'
+      - 'logging=true'
     environment:
       NODE_ENV: development
       NO_BABEL_NODE: true
       CRON_TIME: '*/15 * * * * *' # every 30 seconds
+      LOG_SPARQL_QUERIES: false
     ports:
       - '8084:80'
       - '9231:9229'

@@ -61,7 +61,7 @@ export async function getConflictingPersons(
   }
 }
 
-export async function getPersonAndConflictWithIsInConflictFlag(
+export async function getConflictingPersonUris(
   batch: Array<Conflict>,
 ): Promise<Array<Conflict>> {
   const values = batch.map(
@@ -85,7 +85,7 @@ export async function getPersonAndConflictWithIsInConflictFlag(
         ${values.join('\n')}
       }
       GRAPH ?g {
-        ?conflict a person:Person.
+        ?person a person:Person .
         OPTIONAL {
           ?person persoon:gebruikteVoornaam ?firstName .
         }
@@ -103,7 +103,7 @@ export async function getPersonAndConflictWithIsInConflictFlag(
         }
       }
       GRAPH ?g2 {
-        ?person a person:Person .
+        ?conflict a person:Person .
         OPTIONAL {
           ?conflict persoon:gebruikteVoornaam ?conflictFirstName .
         }
@@ -124,7 +124,7 @@ export async function getPersonAndConflictWithIsInConflictFlag(
       ?g2 ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
       BIND(
-        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictRrn = ?rrn && ?conflictBirthdate = ?birthdate && ?conflictGeslacht != ?geslacht,
+        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictRrn = ?rrn && ?conflictBirthdate = ?birthdate && ?conflictGeslacht = ?geslacht,
             """false"""^^xsd:Boolean,
             """true"""^^xsd:Boolean
           )
