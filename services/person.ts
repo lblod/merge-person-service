@@ -18,11 +18,6 @@ export async function getConflictingPersons(
       GRAPH ?g {
         ?person a person:Person .
         ?person adms:identifier / skos:notation ?rrn .
-
-        OPTIONAL {
-          ?person ext:isInConflict ?isInConflict .
-        }
-        FILTER(!BOUND(?isInConflict) || ?isInConflict = false)
       } 
       ?g ext:ownedBy ?organization .
 
@@ -31,9 +26,9 @@ export async function getConflictingPersons(
         ?conflict adms:identifier / skos:notation ?rrn .
 
         OPTIONAL {
-          ?conflict ext:isInConflict ?isInConflict .
+          ?conflict ext:conflictsWith ?conflictsWith .
         }
-        FILTER(!BOUND(?isInConflict) || ?isInConflict = false)
+        FILTER(!BOUND(?conflictsWith) || ?conflictsWith = false)
       } 
       ?g2 ext:ownedBy ?organization2 .
 
@@ -62,9 +57,13 @@ export async function getConflictingPersons(
 }
 
 export async function getConflictingPersonUris(
-  batch: Array<Conflict>,
+  conflicts: Array<Conflict>,
 ): Promise<Array<Conflict>> {
-  const values = batch.map(
+  if (conflicts.length === 0) {
+    return;
+  }
+
+  const values = conflicts.map(
     (b) =>
       `( ${sparqlEscapeUri(b.conflictUri)} ${sparqlEscapeUri(b.personUri)} )`,
   );
@@ -98,9 +97,6 @@ export async function getConflictingPersonUris(
         OPTIONAL {
           ?person persoon:heeftGeboorte / persoon:datum ?birthdate .
         }
-        OPTIONAL {
-          ?persoon persoon:geslacht ?geslacht .
-        }
       }
       GRAPH ?g2 {
         ?conflict a person:Person .
@@ -116,15 +112,12 @@ export async function getConflictingPersonUris(
         OPTIONAL {
           ?conflict persoon:heeftGeboorte / persoon:datum ?conflictBirthdate .
         }
-        OPTIONAL {
-          ?conflict persoon:geslacht ?conflictGeslacht .
-        }
       } 
       ?g ext:ownedBy ?organization .
       ?g2 ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
       BIND(
-        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictRrn = ?rrn && ?conflictBirthdate = ?birthdate && ?conflictGeslacht = ?geslacht,
+        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictRrn = ?rrn && ?conflictBirthdate = ?birthdate,
             """false"""^^xsd:Boolean,
             """true"""^^xsd:Boolean
           )
@@ -153,6 +146,10 @@ export async function getConflictingPersonUris(
 export async function setupTombstoneForConflicts(
   conflicts: Array<Conflict>,
 ): Promise<void> {
+  if (conflicts.length === 0) {
+    return;
+  }
+
   const values = conflicts.map(
     (c) =>
       `( ${sparqlEscapeUri(c.conflictUri)} ${sparqlEscapeUri(c.personUri)} )`,

@@ -5,14 +5,15 @@ import { CustomError } from '../utils/custom-error';
 import { Conflict } from '../types';
 
 export async function addIsConflictingFlagToPersons(
-  personUris: Array<string>,
+  conflicts: Array<Conflict>,
 ): Promise<void> {
-  if (personUris.length === 0) {
+  if (conflicts.length === 0) {
     return;
   }
 
-  const values = Array.from(new Set(personUris)).map((uri) =>
-    sparqlEscapeUri(uri),
+  const values = conflicts.map(
+    (conflict) =>
+      `( ${sparqlEscapeUri(conflict.conflictUri)} ${sparqlEscapeUri(conflict.personUri)})`,
   );
   const queryString = `
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
@@ -22,22 +23,22 @@ export async function addIsConflictingFlagToPersons(
 
     DELETE {
       GRAPH ?g {
-        ?person dct:modified ?modified .
+        ?conflict dct:modified ?modified .
       }
     }
     INSERT {
       GRAPH ?g {
-        ?person ext:isInConflict """true"""^^xsd:Boolean .
-        ?person dct:modified ?modified .
+        ?conflict ext:conflictsWith ?person  .
+        ?conflict dct:modified ?modified .
       }
     }
     WHERE {
-      VALUES ?person { ${values.join('\n')} }
+      VALUES ( ?conflict ?person) { ${values.join('\n')} }
       GRAPH ?g {
-        ?person a person:Person .
+        ?conflict a person:Person .
 
         OPTIONAL {
-          ?person dct:modified ?modified .
+          ?conflict dct:modified ?modified .
         }
       }
       ?g ext:ownedBy ?organization .
@@ -49,7 +50,7 @@ export async function addIsConflictingFlagToPersons(
     await updateSudo(queryString);
   } catch (error) {
     throw new CustomError(
-      `Something went wrong while adding ext:isInConflict flag to ${personUris.length} persons.`,
+      `Something went wrong while adding ext:conflictsWith flag to ${conflicts.length} persons.`,
     );
   }
 }
@@ -57,6 +58,10 @@ export async function addIsConflictingFlagToPersons(
 export async function updateConflictUsageToPersonAsSubject(
   conflicts: Array<Conflict>,
 ): Promise<void> {
+  if (conflicts.length === 0) {
+    return;
+  }
+
   const values = conflicts.map(
     (c) =>
       `( ${sparqlEscapeUri(c.conflictUri)} ${sparqlEscapeUri(c.personUri)} )`,
@@ -106,6 +111,10 @@ export async function updateConflictUsageToPersonAsSubject(
 export async function updateConflictUsageToPersonAsObject(
   conflicts: Array<Conflict>,
 ): Promise<void> {
+  if (conflicts.length === 0) {
+    return;
+  }
+
   const values = conflicts.map(
     (c) =>
       `( ${sparqlEscapeUri(c.conflictUri)} ${sparqlEscapeUri(c.personUri)} )`,
