@@ -8,7 +8,7 @@ Sometimes a new uri is generated for a person with an identifier (`adms:identifi
 
 When all persons are merged there only exists one person uri for each unique identifier.
 
-Of course we have a second scenario where the data of the person e.g. the _firstName_ is not the same in the conflicting person. If so we add triple to that person `ext:isInConflict` that can be used to find all the person that need manual attention.
+Of course we have a second scenario where the data of the person e.g. the _firstName_ is not the same in the conflicting person. If so we add a triple to that person `ext:conflictsWith` that can be used to find all the person that need manual attention.
 
 ## Adding it to your project
 
@@ -19,7 +19,7 @@ services:
     restart: always
     environment:
       SHOW_DEBUG_LOGS: false # The default value
-      PROCESS_BATCH_SIZE:  100 # The default value
+      PROCESS_BATCH_SIZE:  5 # The default value, most efficient and easy to follow whats going on
       CRON_TIME: '0 8 * * 1-5'; // Every weekday at 8am # The default value
       CONFLICT_BATCH_SIZE: 1000 # The default value here is null this means that for one cronjob it will fetch all conflicts and resolve them
 ```
