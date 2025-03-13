@@ -76,14 +76,19 @@ export async function updateConflictUsageToPersonAsSubject(
     PREFIX person: <http://www.w3.org/ns/person#>
 
     DELETE{
-      GRAPH ?g {
+      GRAPH ?conflictG {
         ?conflict dct:modified ?modified .
       }
     }
     INSERT{
-      GRAPH ?g {
+      GRAPH ?conflictG {
         ?person ?p ?o .
+        ?person mu:uuid ?id .
         ?person dct:modified ?now .
+        ?person adms:identifier ?identifierP .
+        ?identifierP ?ip ?io .
+        ?person persoon:heeftGeboorte ?geboorteP .
+        ?geboorteP ?gp ?go .
       }
     }
     WHERE {
@@ -91,13 +96,28 @@ export async function updateConflictUsageToPersonAsSubject(
         ${values.join('\n')}
       } 
       GRAPH ?g {
+        ?person a person:Person .
+        ?person mu:uuid ?id .
+        
+        OPTIONAL {
+          ?person adms:identifier ?identifierP .
+          ?identifierP ?ip ?io .
+        }
+        OPTIONAL {
+          ?person persoon:heeftGeboorte ?geboorteP .
+          ?geboorteP ?gp ?go .
+        }
+      }
+      GRAPH ?conflictG {
         ?conflict ?p ?o .
         
         OPTIONAL {
           ?conflict dct:modified ?modified .
         }
+        FILTER (?p NOT IN (adms:identifier, persoon:heeftGeboorte, mu:uuid))
       }
-      ?g ext:ownedBy ?organization .
+      ?conflictG ext:ownedBy ?organization .
+      FILTER(?g != ?conflictG)
       BIND(NOW() AS ?now)
     }`;
   try {
@@ -142,7 +162,7 @@ export async function updateConflictUsageToPersonAsObject(
     WHERE {
       VALUES ( ?conflict ?person ) {
         ${values.join('\n')}
-      } 
+      }
       GRAPH ?g {
         ?s ?p ?conflict.
 

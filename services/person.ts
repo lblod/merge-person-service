@@ -161,14 +161,11 @@ export async function setupTombstoneForConflicts(
 
     DELETE {
       GRAPH ?g {
-        ?conflict a person:Person .
-        ?conflict dct:modified ?modified .
+        ?conflict ?p ?o .
       }
     }
     INSERT{
-      GRAPH ?g {
-        ?person dct:modified ?now .
-        
+      GRAPH ?g {    
         ?conflict a astreams:Tombstone.
         ?conflict dct:modified ?now .
         ?conflict astreams:deleted ?now .
@@ -181,11 +178,7 @@ export async function setupTombstoneForConflicts(
         ${values.join('\n')}
       } 
       GRAPH ?g {
-        ?conflict a person:Person .
-        
-        OPTIONAL {
-          ?conflict dct:modified ?modified .
-        }
+        ?conflict ?p ?o .
       } 
       ?g ext:ownedBy ?organization .
       BIND(NOW() AS ?now)
