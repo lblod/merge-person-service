@@ -9,6 +9,9 @@ services:
       NO_BABEL_NODE: true
       CRON_TIME: '*/5 * * * * *' # every 5 seconds
       LOG_SPARQL_ALL: true
+      DEBUG_AUTH_HEADERS: true
+      CRON_LOG_LEVEL: debug
+      PROCESS_BATCH_SIZE: 1 # Process every conflict one by one
     ports:
       - '8084:80'
       - '9231:9229'

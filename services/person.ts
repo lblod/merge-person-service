@@ -3,10 +3,7 @@ import { sparqlEscapeUri } from 'mu';
 
 import { Conflict } from '../types';
 
-export async function getConflictingPersons(
-  batchSize: number | undefined,
-): Promise<Array<Conflict>> {
-  const limit = batchSize ? `LIMIT ${batchSize}` : '';
+export async function getConflictingPersons(): Promise<Array<Conflict>> {
   const queryString = `
     PREFIX adms: <http://www.w3.org/ns/adms#>
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
@@ -33,7 +30,7 @@ export async function getConflictingPersons(
       ?conflictG ext:ownedBy ?organization2 .
 
       FILTER(?person < ?conflict)
-    } ${limit}
+    }
   `;
   try {
     const queryResult = await querySudo(queryString);

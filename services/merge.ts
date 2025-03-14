@@ -3,14 +3,14 @@ import { updateSudo } from '@lblod/mu-auth-sudo';
 
 import { getConflictingPersonUris, setupTombstoneForConflicts } from './person';
 import { Conflict } from '../types';
-import { log } from '../utils/logger';
+import { log, LOG_LEVEL } from '../utils/logger';
 
 export async function processConflictingPersons(
   conflicts: Array<Conflict>,
   batchSize: number,
 ) {
   if (conflicts.length === 0) {
-    log('No conflicts found nothing process');
+    log('No conflicts found nothing process', LOG_LEVEL.INFO);
     return;
   }
 

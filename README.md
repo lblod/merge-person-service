@@ -18,8 +18,7 @@ services:
     image: lblod/merge-person-service:latest
     restart: always
     environment:
-      SHOW_DEBUG_LOGS: false # The default value
-      PROCESS_BATCH_SIZE:  5 # The default value, most efficient and easy to follow whats going on
       CRON_TIME: '0 8 * * 1-5'; // Every weekday at 8am # The default value
-      CONFLICT_BATCH_SIZE: 1000 # The default value here is null this means that for one cronjob it will fetch all conflicts and resolve them
+      CRON_LOG_LEVEL: info or debug # Info logs are always shown, debug can be set here if you need more detail of whats going on
+      PROCESS_BATCH_SIZE:  5 # The default value
 ```
