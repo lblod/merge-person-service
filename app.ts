@@ -1,6 +1,6 @@
 import { CronJob } from 'cron';
 
-import { processConflictingPersons } from './controllers/merge';
+import { processConflictingPersons } from './services/merge';
 import { getConflictingPersons } from './services/person';
 import { log } from './utils/logger';
 
