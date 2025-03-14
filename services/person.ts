@@ -85,15 +85,10 @@ export async function getConflictingPersonUris(
         ?person a person:Person .
         ?person adms:identifier / skos:notation ?rrn .
 
-        OPTIONAL {
-          ?person persoon:gebruikteVoornaam ?firstName .
-        }
-        OPTIONAL {
-          ?person foaf:familyName ?lastName .
-        }
-        OPTIONAL {
-          ?person persoon:heeftGeboorte / persoon:datum ?birthdate .
-        }
+        ?person persoon:gebruikteVoornaam ?firstName .
+        ?person foaf:familyName ?lastName .
+        ?person persoon:heeftGeboorte / persoon:datum ?birthdate .
+        ?person persoon:geslacht ?geslacht .
       }
       GRAPH ?conflictG {
         ?conflict a person:Person .
@@ -108,12 +103,15 @@ export async function getConflictingPersonUris(
         OPTIONAL {
           ?conflict persoon:heeftGeboorte / persoon:datum ?conflictBirthdate .
         }
+        OPTIONAL {
+          ?conflict persoon:geslacht ?conflictGeslacht .
+        }
       } 
       ?g ext:ownedBy ?organization .
       ?conflictG ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
       BIND(
-        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictBirthdate = ?birthdate,
+        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictBirthdate = ?birthdate && ?conflictGeslacht = ?geslacht,
             """false"""^^xsd:Boolean,
             """true"""^^xsd:Boolean
           )

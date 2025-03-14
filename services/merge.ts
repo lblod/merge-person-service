@@ -109,10 +109,10 @@ export async function updateConflictUsageToPersonAsSubject(
         ?person ?p ?o .
         ?person mu:uuid ?id .
         ?person dct:modified ?now .
-        ?person adms:identifier ?identifierP .
-        ?identifierP ?ip ?io .
-        ?person persoon:heeftGeboorte ?geboorteP .
-        ?geboorteP ?gp ?go .
+        ?person adms:identifier ?identifier .
+        ?identifier ?ip ?io .
+        ?person persoon:heeftGeboorte ?geboorte .
+        ?geboorte ?gp ?go .
       }
     }
     WHERE {
@@ -123,14 +123,13 @@ export async function updateConflictUsageToPersonAsSubject(
         ?person a person:Person .
         ?person mu:uuid ?id .
         
-        OPTIONAL {
-          ?person adms:identifier ?identifierP .
-          ?identifierP ?ip ?io .
-        }
-        OPTIONAL {
-          ?person persoon:heeftGeboorte ?geboorteP .
-          ?geboorteP ?gp ?go .
-        }
+        ?person adms:identifier ?identifier .
+        ?identifier ?ip ?io .
+
+        ?person persoon:heeftGeboorte ?geboorte .
+        ?geboorte ?gp ?go .
+
+        ?person persoon:geslacht ?geslacht .
       }
       ?g ext:ownedBy ?organization .
       GRAPH ?conflictG {
@@ -139,7 +138,7 @@ export async function updateConflictUsageToPersonAsSubject(
         OPTIONAL {
           ?conflict dct:modified ?modified .
         }
-        FILTER (?p NOT IN (adms:identifier, persoon:heeftGeboorte, mu:uuid))
+        FILTER (?p NOT IN (adms:identifier, persoon:heeftGeboorte, mu:uuid, persoon:geslacht))
       }
       ?conflictG ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
