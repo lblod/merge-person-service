@@ -21,7 +21,7 @@ export async function getConflictingPersons(
       } 
       ?g ext:ownedBy ?organization .
 
-      GRAPH ?g2 {
+      GRAPH ?conflictG {
         ?conflict a person:Person .
         ?conflict adms:identifier / skos:notation ?rrn .
 
@@ -30,7 +30,7 @@ export async function getConflictingPersons(
         }
         FILTER(!BOUND(?conflictsWith) || ?conflictsWith = false)
       } 
-      ?g2 ext:ownedBy ?organization2 .
+      ?conflictG ext:ownedBy ?organization2 .
 
       FILTER(?person < ?conflict)
     } ${limit}
@@ -95,7 +95,7 @@ export async function getConflictingPersonUris(
           ?person persoon:heeftGeboorte / persoon:datum ?birthdate .
         }
       }
-      GRAPH ?g2 {
+      GRAPH ?conflictG {
         ?conflict a person:Person .
         ?conflict adms:identifier / skos:notation ?rrn .
 
@@ -110,7 +110,7 @@ export async function getConflictingPersonUris(
         }
       } 
       ?g ext:ownedBy ?organization .
-      ?g2 ext:ownedBy ?organization2 .
+      ?conflictG ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
       BIND(
         IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictBirthdate = ?birthdate,
