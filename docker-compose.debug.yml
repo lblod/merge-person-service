@@ -7,7 +7,8 @@ services:
     environment:
       NODE_ENV: development
       NO_BABEL_NODE: true
-      CRON_TIME: '*/15 * * * * *' # every 30 seconds
+      CRON_TIME: '*/5 * * * * *' # every 5 seconds
+      LOG_SPARQL_ALL: true
     ports:
       - '8084:80'
       - '9231:9229'

@@ -27,14 +27,18 @@ export async function processConflictingPersons(
     const withFlag = personsWithConflictAndFlag.filter(
       (p: Conflict) => p.hasConflictingData,
     );
+    log('Add flags to persons in conflict with data mismatch');
     await addIsConflictingFlagToPersons(withFlag);
 
     const withoutFlag = personsWithConflictAndFlag.filter(
       (p: Conflict) => !p.hasConflictingData,
     );
     if (withoutFlag.length >= 1) {
+      log('Update usage as subject');
       await updateConflictUsageToPersonAsSubject(withoutFlag);
+      log('Update usage as object');
       await updateConflictUsageToPersonAsObject(withoutFlag);
+      log('Setup tombstones');
       await setupTombstoneForConflicts(withoutFlag);
     }
   }

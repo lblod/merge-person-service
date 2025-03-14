@@ -6,7 +6,7 @@ import { log } from './utils/logger';
 
 export const SHOW_DEBUG_LOGS = process.env.SHOW_DEBUG_LOGS || true;
 const CONFLICT_BATCH_SIZE = process.env.CONFLICT_BATCH_SIZE || null;
-const PROCESS_BATCH_SIZE = process.env.PROCESS_BATCH_SIZE || 5; // USing 5 here will give you the most feedback on whats going on
+const PROCESS_BATCH_SIZE = process.env.PROCESS_BATCH_SIZE || 1; // Using 1 here will give you the most feedback on whats going on
 const CRON_TIME = process.env.CRON_TIME || '0 8 * * 1-5'; // Every weekday at 8am
 
 log(
