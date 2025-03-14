@@ -2,7 +2,6 @@ import { querySudo, updateSudo } from '@lblod/mu-auth-sudo';
 import { sparqlEscapeUri } from 'mu';
 
 import { Conflict } from '../types';
-import { CustomError } from '../utils/custom-error';
 
 export async function getConflictingPersons(
   batchSize: number | undefined,
@@ -51,9 +50,7 @@ export async function getConflictingPersons(
       };
     });
   } catch (error) {
-    throw new CustomError(
-      'Something went wrong while querying the person conflicts',
-    );
+    throw new Error('Something went wrong while querying the person conflicts');
   }
 }
 
@@ -136,7 +133,7 @@ export async function getConflictingPersonUris(
       };
     });
   } catch (error) {
-    throw new CustomError(
+    throw new Error(
       'Something went wrong while querying for data missmatches for the person with conflicts.',
     );
   }
@@ -189,7 +186,7 @@ export async function setupTombstoneForConflicts(
   try {
     await updateSudo(queryString);
   } catch (error) {
-    throw new CustomError(
+    throw new Error(
       'Something went wrong while creating tombstones for the conflicting persons.',
     );
   }

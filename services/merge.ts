@@ -1,7 +1,6 @@
 import { sparqlEscapeUri } from 'mu';
 import { updateSudo } from '@lblod/mu-auth-sudo';
 
-import { CustomError } from '../utils/custom-error';
 import { Conflict } from '../types';
 
 export async function addIsConflictingFlagToPersons(
@@ -38,7 +37,7 @@ export async function addIsConflictingFlagToPersons(
   try {
     await updateSudo(queryString);
   } catch (error) {
-    throw new CustomError(
+    throw new Error(
       `Something went wrong while adding ext:conflictsWith flag to ${conflicts.length} persons.`,
     );
   }
@@ -112,7 +111,7 @@ export async function updateConflictUsageToPersonAsSubject(
   try {
     await updateSudo(queryString);
   } catch (error) {
-    throw new CustomError(
+    throw new Error(
       'Something went wrong while updating usage of conflict to person when used as subject in triple.',
     );
   }
@@ -165,7 +164,7 @@ export async function updateConflictUsageToPersonAsObject(
   try {
     await updateSudo(queryString);
   } catch (error) {
-    throw new CustomError(
+    throw new Error(
       'Something went wrong while updating usage of conflict to person when used as object in triple.',
     );
   }
