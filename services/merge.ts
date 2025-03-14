@@ -21,28 +21,17 @@ export async function addIsConflictingFlagToPersons(
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
     PREFIX dct: <http://purl.org/dc/terms/>
 
-    DELETE {
-      GRAPH ?g {
-        ?conflict dct:modified ?modified .
-      }
-    }
     INSERT {
       GRAPH ?g {
         ?conflict ext:conflictsWith ?person  .
-        ?conflict dct:modified ?modified .
       }
     }
     WHERE {
       VALUES ( ?conflict ?person) { ${values.join('\n')} }
       GRAPH ?g {
         ?conflict a person:Person .
-
-        OPTIONAL {
-          ?conflict dct:modified ?modified .
-        }
       }
       ?g ext:ownedBy ?organization .
-      BIND(NOW() AS ?now)
     }
   `;
 
@@ -108,6 +97,7 @@ export async function updateConflictUsageToPersonAsSubject(
           ?geboorteP ?gp ?go .
         }
       }
+      ?g ext:ownedBy ?organization .
       GRAPH ?conflictG {
         ?conflict ?p ?o .
         
@@ -116,8 +106,7 @@ export async function updateConflictUsageToPersonAsSubject(
         }
         FILTER (?p NOT IN (adms:identifier, persoon:heeftGeboorte, mu:uuid))
       }
-      ?conflictG ext:ownedBy ?organization .
-      FILTER(?g != ?conflictG)
+      ?conflictG ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
     }`;
   try {
