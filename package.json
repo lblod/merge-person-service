@@ -23,11 +23,7 @@
   },
   "dependencies": {
     "@lblod/mu-auth-sudo": "^0.6.1",
-    "body-parser": "^1.19.0",
     "cron": "^4.1.0",
-    "express-promise-router": "^4.1.1",
-    "moment": "^2.29.1",
-    "release-it": "^15.4.1",
-    "uuid": "^8.3.1"
+    "release-it": "^15.4.1"
   }
 }
