@@ -73,7 +73,7 @@ export async function getConflictingPersonUris(
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 
-    SELECT DISTINCT ?person ?conflict ?isConflicting
+    SELECT DISTINCT ?person ?conflict ?isUnresolvable
     WHERE {
       VALUES ( ?conflict ?person ) {
         ${values.join('\n')}
@@ -112,7 +112,7 @@ export async function getConflictingPersonUris(
             """false"""^^xsd:Boolean,
             """true"""^^xsd:Boolean
           )
-      AS ?isConflicting)
+      AS ?isUnresolvable)
     }
   `;
 
@@ -124,13 +124,11 @@ export async function getConflictingPersonUris(
       return {
         personUri: b.person?.value,
         conflictUri: b.conflict?.value,
-        hasConflictingData: b.isConflicting?.value == 'true' ? true : false,
+        isUnresolvable: b.isUnresolvable?.value == 'true' ? true : false,
       };
     });
   } catch (error) {
-    throw new Error(
-      'Something went wrong while querying for data missmatches for the person with conflicts.',
-    );
+    throw new Error('Something went wrong while querying for conflicts');
   }
 }
 

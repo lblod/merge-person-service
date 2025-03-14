@@ -10,7 +10,7 @@ export async function processConflictingPersons(
   batchSize: number,
 ) {
   if (conflicts.length === 0) {
-    log('No conflicts found nothing process', LOG_LEVEL.INFO);
+    log('No conflicts found nothing to process', LOG_LEVEL.INFO);
     return;
   }
 
@@ -19,22 +19,22 @@ export async function processConflictingPersons(
     log(`Starting on batch ${batches.indexOf(batch) + 1}/${batches.length}`);
     const personsWithConflictAndFlag = await getConflictingPersonUris(batch);
 
-    const withFlag = personsWithConflictAndFlag.filter(
-      (p: Conflict) => p.hasConflictingData,
+    const unresolvableConflicts = personsWithConflictAndFlag.filter(
+      (p: Conflict) => p.isUnresolvable,
     );
-    log('Add flags to persons in conflict with data mismatch');
-    await addIsConflictingFlagToPersons(withFlag);
+    log('Add flags to persons in conflict that are unresolvable');
+    await addIsConflictingFlagToPersons(unresolvableConflicts);
 
-    const withoutFlag = personsWithConflictAndFlag.filter(
-      (p: Conflict) => !p.hasConflictingData,
+    const resolvableConflicts = personsWithConflictAndFlag.filter(
+      (p: Conflict) => !p.isUnresolvable,
     );
-    if (withoutFlag.length >= 1) {
+    if (resolvableConflicts.length >= 1) {
       log('Update usage as subject');
-      await updateConflictUsageToPersonAsSubject(withoutFlag);
+      await updateConflictUsageToPersonAsSubject(resolvableConflicts);
       log('Update usage as object');
-      await updateConflictUsageToPersonAsObject(withoutFlag);
+      await updateConflictUsageToPersonAsObject(resolvableConflicts);
       log('Setup tombstones');
-      await setupTombstoneForConflicts(withoutFlag);
+      await setupTombstoneForConflicts(resolvableConflicts);
     }
   }
 }
