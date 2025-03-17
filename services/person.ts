@@ -82,10 +82,12 @@ export async function getConflictingPersonUris(
         ?person a person:Person .
         ?person adms:identifier / skos:notation ?rrn .
 
-        ?person persoon:gebruikteVoornaam ?firstName .
-        ?person foaf:familyName ?lastName .
-        ?person persoon:heeftGeboorte / persoon:datum ?birthdate .
-        ?person persoon:geslacht ?geslacht .
+        OPTIONAL {
+          ?person persoon:gebruikteVoornaam ?firstName .
+          ?person foaf:familyName ?lastName .
+          ?person persoon:heeftGeboorte / persoon:datum ?birthdate .
+          ?person persoon:geslacht ?geslacht .
+        }
       }
       GRAPH ?conflictG {
         ?conflict a person:Person .
@@ -108,7 +110,8 @@ export async function getConflictingPersonUris(
       ?conflictG ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
       BIND(
-        IF(?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictBirthdate = ?birthdate && ?conflictGeslacht = ?geslacht,
+        IF( #FirstName is added to this unresolvable so when the person does not have complete data we also add the flag
+          BOUND(?firstName) && ?conflictFirstName = ?firstName && ?conflictLastName = ?lastName && ?conflictBirthdate = ?birthdate && ?conflictGeslacht = ?geslacht,
             """false"""^^xsd:Boolean,
             """true"""^^xsd:Boolean
           )
