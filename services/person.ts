@@ -2,6 +2,7 @@ import { querySudo, updateSudo } from '@lblod/mu-auth-sudo';
 import { sparqlEscapeUri } from 'mu';
 
 import { Conflict } from '../types';
+import { log } from '../utils/logger';
 
 export async function getConflictingPersons(): Promise<Array<Conflict>> {
   const queryString = `
@@ -15,6 +16,11 @@ export async function getConflictingPersons(): Promise<Array<Conflict>> {
       GRAPH ?g {
         ?person a person:Person .
         ?person adms:identifier / skos:notation ?rrn .
+
+        OPTIONAL {
+          ?person ext:conflictsWith ?conflictsWith .
+        }
+        FILTER(!BOUND(?conflictsWith) || ?conflictsWith = false)
       } 
       ?g ext:ownedBy ?organization .
 
@@ -131,6 +137,7 @@ export async function getConflictingPersonUris(
       };
     });
   } catch (error) {
+    log(`Error was thrown on conflicts: ${JSON.stringify(conflicts)}`);
     throw new Error('Something went wrong while querying for conflicts');
   }
 }
@@ -172,6 +179,7 @@ export async function setupTombstoneForConflicts(
         ${values.join('\n')}
       } 
       GRAPH ?g {
+        ?conflict a person:Person .
         ?conflict ?p ?o .
       } 
       ?g ext:ownedBy ?organization .
@@ -182,6 +190,7 @@ export async function setupTombstoneForConflicts(
   try {
     await updateSudo(queryString);
   } catch (error) {
+    log(`Error was thrown on conflicts: ${JSON.stringify(conflicts)}`);
     throw new Error(
       'Something went wrong while creating tombstones for the conflicting persons.',
     );

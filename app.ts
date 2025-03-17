@@ -5,7 +5,7 @@ import { getConflictingPersons } from './services/person';
 import { log, LOG_LEVEL } from './utils/logger';
 
 const CRON_TIME = process.env.CRON_TIME || '0 8 * * 1-5'; // Every weekday at 8am
-const PROCESS_BATCH_SIZE = process.env.PROCESS_BATCH_SIZE || 1; // Using 1 here will give you the most feedback on whats going on
+const PROCESS_BATCH_SIZE = parseInt(process.env.PROCESS_BATCH_SIZE || 25); // Using 1 here will give you the most feedback on whats going on
 
 log(
   `CONFIG: ${JSON.stringify({ CRON_TIME, PROCESS_BATCH_SIZE })}`,

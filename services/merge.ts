@@ -73,6 +73,7 @@ export async function addIsConflictingFlagToPersons(
   try {
     await updateSudo(queryString);
   } catch (error) {
+    log(`Error was thrown on conflicts: ${JSON.stringify(conflicts)}`);
     throw new Error(
       `Something went wrong while adding ext:conflictsWith flag to ${conflicts.length} persons.`,
     );
@@ -133,6 +134,7 @@ export async function updateConflictUsageToPersonAsSubject(
       }
       ?g ext:ownedBy ?organization .
       GRAPH ?conflictG {
+        ?conflict a person:Person .
         ?conflict ?p ?o .
         
         OPTIONAL {
@@ -146,6 +148,7 @@ export async function updateConflictUsageToPersonAsSubject(
   try {
     await updateSudo(queryString);
   } catch (error) {
+    log(`Error was thrown on conflicts: ${JSON.stringify(conflicts)}`);
     throw new Error(
       'Something went wrong while updating usage of conflict to person when used as subject in triple.',
     );
@@ -199,6 +202,7 @@ export async function updateConflictUsageToPersonAsObject(
   try {
     await updateSudo(queryString);
   } catch (error) {
+    log(`Error was thrown on conflicts: ${JSON.stringify(conflicts)}`);
     throw new Error(
       'Something went wrong while updating usage of conflict to person when used as object in triple.',
     );
