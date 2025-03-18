@@ -102,7 +102,7 @@ export async function updateConflictUsageToPersonAsSubject(
 
     DELETE{
       GRAPH ?conflictG {
-        ?conflict dct:modified ?modified .
+        ?person dct:modified ?modified .
       }
     }
     INSERT{
@@ -110,6 +110,7 @@ export async function updateConflictUsageToPersonAsSubject(
         ?person ?p ?o .
         ?person mu:uuid ?id .
         ?person dct:modified ?now .
+        ?person persoon:geslacht ?geslacht .
         ?person adms:identifier ?identifier .
         ?identifier ?ip ?io .
         ?person persoon:heeftGeboorte ?geboorte .
@@ -177,6 +178,7 @@ export async function updateConflictUsageToPersonAsObject(
     DELETE{
       GRAPH ?g {
         ?s dct:modified ?modified .
+        ?s ?p ?conflict .
       }
     }
     INSERT{
@@ -190,7 +192,7 @@ export async function updateConflictUsageToPersonAsObject(
         ${values.join('\n')}
       }
       GRAPH ?g {
-        ?s ?p ?conflict.
+        ?s ?p ?conflict .
 
         OPTIONAL {
           ?s dct:modified ?modified .
