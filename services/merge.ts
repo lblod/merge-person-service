@@ -31,6 +31,10 @@ export async function processConflictingPersons(
     if (resolvableConflicts.length >= 1) {
       log('Update usage as subject');
       await updateConflictUsageToPersonAsSubject(resolvableConflicts);
+      log(
+        'Update identifier and geboorte usage where conflict used as a subject',
+      );
+      await updateIdentifierAndGeboorteUsageForConflicts(resolvableConflicts);
       log('Update usage as object');
       await updateConflictUsageToPersonAsObject(resolvableConflicts);
       log('Setup tombstones');
@@ -120,7 +124,6 @@ export async function updateConflictUsageToPersonAsSubject(
       GRAPH ?g {
         ?person a person:Person .
         ?person mu:uuid ?id .
-
         ?person persoon:geslacht ?geslacht .
       }
       ?g ext:ownedBy ?organization .
@@ -129,10 +132,7 @@ export async function updateConflictUsageToPersonAsSubject(
         ?conflict a person:Person .
         ?conflict ?p ?o .
 
-        OPTIONAL {
-          ?conflict dct:modified ?modified .
-        }
-        FILTER (?p NOT IN (adms:identifier, persoon:heeftGeboorte, mu:uuid, persoon:geslacht))
+        FILTER (?p NOT IN (adms:identifier, persoon:heeftGeboorte, mu:uuid, persoon:geslacht, dct:modified))
       }
       ?conflictG ext:ownedBy ?organization2 .
       BIND(NOW() AS ?now)
@@ -143,6 +143,71 @@ export async function updateConflictUsageToPersonAsSubject(
     log(`Error was thrown on conflicts: ${JSON.stringify(conflicts)}`);
     throw new Error(
       'Something went wrong while updating usage of conflict to person when used as subject in triple.',
+    );
+  }
+}
+export async function updateIdentifierAndGeboorteUsageForConflicts(
+  conflicts: Array<Conflict>,
+): Promise<void> {
+  if (conflicts.length === 0) {
+    return;
+  }
+
+  const values = conflicts.map(
+    (c) =>
+      `( ${sparqlEscapeUri(c.conflictUri)} ${sparqlEscapeUri(c.personUri)} )`,
+  );
+  const queryString = `
+    PREFIX persoon: <http://data.vlaanderen.be/ns/persoon#>
+    PREFIX adms: <http://www.w3.org/ns/adms#>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
+    PREFIX person: <http://www.w3.org/ns/person#>
+
+    DELETE{
+      GRAPH ?conflictG {
+        ?person dct:modified ?modified .
+        ?person ?link ?linked .
+      }
+    }
+    INSERT{
+      GRAPH ?conflictG {
+        ?person dct:modified ?now .
+        ?person ?link ?linked .
+        ?linked ?p ?o .
+        ?linked dct:modified ?now .
+      }
+    }
+    WHERE {
+      VALUES ( ?conflict ?person ) {
+        ${values.join('\n')}
+      } 
+    GRAPH ?g {
+      ?person a person:Person .
+      VALUES ?link {
+        adms:identifier
+        persoon:heeftGeboorte
+      }
+      ?person ?link ?linked .
+      ?linked ?p ?o .
+      OPTIONAL {
+        ?person dct:modified ?modified .
+      }
+    }
+    ?g ext:ownedBy ?organization .
+
+    GRAPH ?conflictG {
+      ?conflict a person:Person .
+    }
+    ?conflictG ext:ownedBy ?organization2 .
+    BIND(NOW() AS ?now)
+  }`;
+  try {
+    await updateSudo(queryString);
+  } catch (error) {
+    log(`Error was thrown on conflicts: ${JSON.stringify(conflicts)}`);
+    throw new Error(
+      'Something went wrong while updating identifier and geboorte usage for person in conflict graph.',
     );
   }
 }
