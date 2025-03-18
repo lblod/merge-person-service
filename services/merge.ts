@@ -111,10 +111,6 @@ export async function updateConflictUsageToPersonAsSubject(
         ?person mu:uuid ?id .
         ?person dct:modified ?now .
         ?person persoon:geslacht ?geslacht .
-        ?person adms:identifier ?identifier .
-        ?identifier ?ip ?io .
-        ?person persoon:heeftGeboorte ?geboorte .
-        ?geboorte ?gp ?go .
       }
     }
     WHERE {
@@ -124,20 +120,15 @@ export async function updateConflictUsageToPersonAsSubject(
       GRAPH ?g {
         ?person a person:Person .
         ?person mu:uuid ?id .
-        
-        ?person adms:identifier ?identifier .
-        ?identifier ?ip ?io .
-
-        ?person persoon:heeftGeboorte ?geboorte .
-        ?geboorte ?gp ?go .
 
         ?person persoon:geslacht ?geslacht .
       }
       ?g ext:ownedBy ?organization .
+
       GRAPH ?conflictG {
         ?conflict a person:Person .
         ?conflict ?p ?o .
-        
+
         OPTIONAL {
           ?conflict dct:modified ?modified .
         }
@@ -155,6 +146,7 @@ export async function updateConflictUsageToPersonAsSubject(
     );
   }
 }
+
 export async function updateConflictUsageToPersonAsObject(
   conflicts: Array<Conflict>,
 ): Promise<void> {
