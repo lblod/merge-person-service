@@ -164,11 +164,6 @@ export async function updateIdentifierAndGeboorteUsageForConflicts(
     PREFIX ext: <http://mu.semte.ch/vocabularies/ext/>
     PREFIX person: <http://www.w3.org/ns/person#>
 
-    DELETE{
-      GRAPH ?conflictG {
-        ?person ?link ?linked .
-      }
-    }
     INSERT{
       GRAPH ?conflictG {
         ?person dct:modified ?now .
