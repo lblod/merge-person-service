@@ -166,7 +166,6 @@ export async function updateIdentifierAndGeboorteUsageForConflicts(
 
     DELETE{
       GRAPH ?conflictG {
-        ?person dct:modified ?modified .
         ?person ?link ?linked .
       }
     }
@@ -190,9 +189,6 @@ export async function updateIdentifierAndGeboorteUsageForConflicts(
       }
       ?person ?link ?linked .
       ?linked ?p ?o .
-      OPTIONAL {
-        ?person dct:modified ?modified .
-      }
     }
     ?g ext:ownedBy ?organization .
 
