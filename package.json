@@ -1,0 +1,29 @@
+{
+  "name": "merge-person-service",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Service to handle backend business logic for person instances",
+  "main": "app.js",
+  "author": "redpencil.io",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.12.10",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "eslint": "^8.23.1",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "mu-types": "git+https://github.com/rahien/mu-types.git",
+    "prettier": "^3.0.0"
+  },
+  "scripts": {
+    "lint:js": "eslint . --cache --ext .ts",
+    "lint:js:fix": "eslint . --cache --ext .ts --fix",
+    "release": "release-it",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@lblod/mu-auth-sudo": "^0.6.1",
+    "cron": "^4.1.0",
+    "release-it": "^15.4.1"
+  }
+}

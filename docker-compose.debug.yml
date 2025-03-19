@@ -1,0 +1,24 @@
+services:
+  merge-person-cron:
+    image: semtech/mu-javascript-template:latest
+    restart: 'no'
+    labels:
+      - 'logging=true'
+    environment:
+      NODE_ENV: development
+      NO_BABEL_NODE: true
+      CRON_TIME: '*/5 * * * * *' # every 5 seconds
+      LOG_SPARQL_ALL: true
+      DEBUG_AUTH_HEADERS: true
+      CRON_LOG_LEVEL: debug
+      PROCESS_BATCH_SIZE: 1 # Process every conflict one by one
+    ports:
+      - '8084:80'
+      - '9231:9229'
+    volumes:
+      - ./:/app
+    networks:
+      - debug
+networks:
+  debug:
+    external: true
