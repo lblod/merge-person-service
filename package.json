@@ -1,6 +1,6 @@
 {
   "name": "merge-person-service",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Service to handle backend business logic for person instances",
   "main": "app.js",
